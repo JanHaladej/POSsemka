@@ -1,0 +1,1 @@
+/usr/bin/c++ -g CMakeFiles/DownloadManager.dir/main.cpp.o -o DownloadManager  -lpthread 
