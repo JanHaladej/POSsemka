@@ -83,25 +83,28 @@ int httpProtocol(std::string stranka, std::string objektNaStiahnutie){
 
         // Write whatever content we already have to output.
         //v bufferi je: HTTP/1.1 200 OK \r\nServer: openresty\r\nDate: Fri, 30
+        std::ofstream myfile;
         if (response.size() > 0){
             //zapis textu do txt suboru
-            std::ofstream myfile;
-            myfile.open ("/home/haladej/testXXX.txt");
+            //std::ofstream myfile;
+            myfile.open ("/home/haladej/imageXXX.jpeg");
             myfile << &response << std::endl;
-            myfile.close();
+            //myfile.close();
             //zapis textu do txt suboru
         }
             //std::cout << &response;
 
 
-/*
+
         // Read until EOF, writing data to output as we go.
         boost::system::error_code error;
         while (boost::asio::read(socket, response,
                                  boost::asio::transfer_at_least(1), error))
-            std::cout << &response;
-        if (error != boost::asio::error::eof)
-            throw boost::system::system_error(error);*/
+            myfile << &response;
+        if (error != boost::asio::error::eof){
+            throw boost::system::system_error(error);}
+
+        myfile.close();
     }
     catch (std::exception& e)
     {
@@ -114,7 +117,7 @@ int httpProtocol(std::string stranka, std::string objektNaStiahnutie){
 int main(int argc, char* argv[])
 {
     std::string stranka= "pukalik.sk";
-    std::string objekNaStiahnutie = "/pos/text.txt";
+    std::string objekNaStiahnutie = "/pos/dog.jpeg";
 
     httpProtocol(stranka, objekNaStiahnutie);
 
