@@ -22,13 +22,6 @@ string* splitstr(string str, string deli = " ")
 
 int main(int argc, char* argv[])
 {
-    std::string prikaz;
-    std::string stranka;// = "kornhauserbus.sk";
-    std::string objekNaStiahnutie;// = "/images/background.png";
-    std::string protokol;
-    std::string priorita;
-    std::string cas;
-
     string userInput;
     string* strPtr;
 
