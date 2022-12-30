@@ -101,26 +101,9 @@ int httpProtocol(std::string stranka, std::string objektNaStiahnutie){
 
 int main(int argc, char* argv[])
 {
-    std::string prikaz;
-    std::string stranka;// = "kornhauserbus.sk";
-    std::string objekNaStiahnutie;// = "/images/background.png";
-    std::string protokol;
-    std::string priorita;
-    std::string cas;
-
-    /*
-    if (argc != 3)
-    {
-        std::cout << "Usage: sync_client <server> <path>\n";
-        std::cout << "Example:\n";
-        std::cout << "  sync_client www.boost.org /LICENSE_1_0.txt\n";
-        return 1;
-    }
-    */
-
-
-
-
+    std::string stranka= "pukalik.sk";
+    std::string objekNaStiahnutie = "/pos/dog.jpeg";
+    
     httpProtocol(stranka, objekNaStiahnutie);
 
     return 0;
