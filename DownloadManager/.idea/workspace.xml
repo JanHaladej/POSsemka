@@ -18,6 +18,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3ae27b20-77b9-4b60-a3a5-aa2256d43f3c" name="Changes" comment="https funkcne podla dokumentacie testovane na obrazku do konzoly">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/main.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -59,7 +60,7 @@
   }
 }]]></component>
   <component name="RunManager">
-    <configuration name="DownloadManager" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="kornhauserbus.sk /images/background.png" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="DownloadManager" TARGET_NAME="DownloadManager" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="DownloadManager" RUN_TARGET_NAME="DownloadManager">
+    <configuration name="DownloadManager" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="DownloadManager" TARGET_NAME="DownloadManager" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="DownloadManager" RUN_TARGET_NAME="DownloadManager">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -75,7 +76,7 @@
       <updated>1672347400024</updated>
       <workItem from="1672347402459" duration="3064000" />
       <workItem from="1672387863419" duration="2174000" />
-      <workItem from="1672407580814" duration="10292000" />
+      <workItem from="1672407580814" duration="16701000" />
     </task>
     <task id="LOCAL-00001" summary="https funkcne podla dokumentacie testovane na obrazku do konzoly">
       <created>1672349095601</created>
