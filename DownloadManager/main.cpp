@@ -6,17 +6,9 @@
 
 using boost::asio::ip::tcp;
 
-int main(int argc, char* argv[])
-{
+int httpProtocol(std::string stranka, std::string objektNaStiahnutie){
     try
     {
-        if (argc != 3)
-        {
-            std::cout << "Usage: sync_client <server> <path>\n";
-            std::cout << "Example:\n";
-            std::cout << "  sync_client www.boost.org /LICENSE_1_0.txt\n";
-            return 1;
-        }
 
         boost::asio::io_context io_context; // zakladne I/O funkcionality OS - posielanie streamov
 
@@ -25,7 +17,7 @@ int main(int argc, char* argv[])
         // endpoint -> When two entities communicate with each other they essentially exchange information. In order to
         // make this happen, each entity must be clear as to where to send the information. From the programmer's point
         // of view, each entity involved in the communication must have a clear endpoint.
-        tcp::resolver::results_type endpoints = resolver.resolve(argv[1], "http"); //This function is used to resolve host and service names into a list of endpoint entries.
+        tcp::resolver::results_type endpoints = resolver.resolve(stranka, "http"); //This function is used to resolve host and service names into a list of endpoint entries.
 
         // Try each endpoint until we successfully establish a connection.
         // Sockets are providing a way for two processes or programs to communicate over the network
@@ -38,8 +30,8 @@ int main(int argc, char* argv[])
         // allow us to treat all data up until the EOF as the content.
         boost::asio::streambuf request; // data respo viacero poli dat -> size() <= max_size()
         std::ostream request_stream(&request); // vpis do streamu -> request co sa posiela -> informacie -> ostream == output stream
-        request_stream << "GET " << argv[2] << " HTTP/1.0\r\n";
-        request_stream << "Host: " << argv[1] << "\r\n";
+        request_stream << "GET " << objektNaStiahnutie << " HTTP/1.0\r\n";
+        request_stream << "Host: " << stranka << "\r\n";
         request_stream << "Accept: */*\r\n";
         request_stream << "Connection: close\r\n\r\n";
 
@@ -103,6 +95,33 @@ int main(int argc, char* argv[])
     {
         std::cout << "Exception: " << e.what() << "\n";
     }
+
+    return 0;
+}
+
+int main(int argc, char* argv[])
+{
+    std::string prikaz;
+    std::string stranka;// = "kornhauserbus.sk";
+    std::string objekNaStiahnutie;// = "/images/background.png";
+    std::string protokol;
+    std::string priorita;
+    std::string cas;
+
+    /*
+    if (argc != 3)
+    {
+        std::cout << "Usage: sync_client <server> <path>\n";
+        std::cout << "Example:\n";
+        std::cout << "  sync_client www.boost.org /LICENSE_1_0.txt\n";
+        return 1;
+    }
+    */
+
+
+
+
+    httpProtocol(stranka, objekNaStiahnutie);
 
     return 0;
 }
