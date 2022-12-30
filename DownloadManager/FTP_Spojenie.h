@@ -11,24 +11,24 @@
 
 using boost::asio::ip::tcp;
 
-class FTP_Connect
+class FTP_Spojenie
 {
     private:
         boost::asio::io_service ios_;
         tcp::socket socket_;
 
     public:
-        FTP_Connect() : socket_(ios_) {}
-        void connect(const std::string &hostName, const std::string &port);
-        std::string readLineFromSocket(); //reads a /r/n terminated line from the socket
-        void writeLineFromSocket(const std::string &buffer);
-        void closeSocket()
+        FTP_Spojenie() : socket_(ios_) {}
+        void vytvorSpojenie(const std::string &hostName, const std::string &port);
+        std::string citajRiadokZoSocketu(); //reads a /r/n terminated line from the socket
+        void zapisRiadokDoSocketu(const std::string &buffer);
+        void zatvorSocket()
         {
             this->socket_.close();
         }
-        ~FTP_Connect()
+        ~FTP_Spojenie()
         {
-            this->closeSocket();
+            this->zatvorSocket();
         }
 };
 

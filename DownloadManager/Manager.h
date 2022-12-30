@@ -24,11 +24,12 @@ class Manager
     public:
     void vyberProtocol()
     {
-        printf("Please write Number: \n\t\t"
-               "        HTTP = 1,\n\t\t"
-               "        HTTPS = 2,\n\t\t"
-               "        FTP = 3\n\t\t"
-               "        FTPS = 4");
+        printf("Prosím vyberte číslo: \n\t\t"
+               "        HTTP  =  1,\n\t\t"
+               "        HTTPS =  2,\n\t\t"
+               "        FTP   =  3,\n\t\t"
+               "        FTPS  =  4\n\t "
+               "Zadaj číslo: ");
         char number_string[10];
         int number;
 
@@ -44,18 +45,22 @@ class Manager
         {
             case 1:
                 this->protocol = {Protocol::HTTP};
+                printf("Vybrali ste si protokol HTTP :)\n");
             break;
             case 2:
                 this->protocol = {Protocol::HTTPS};
+                printf("Vybrali ste si protokol HTTPS :)\n");
                 break;
             case 3:
                 this->protocol = {Protocol::FTP};
+                printf("Vybrali ste si protokol FTP :)\n");
                 break;
             case 4:
                 this->protocol = {Protocol::FTPS};
+                printf("Vybrali ste si protokol FTPS :)\n");
                 break;
             default:
-                printf("Invalid Value!");
+                printf("Invalidná hodnota, zadaj znova!\n");
                 vyberProtocol();
         }
     }

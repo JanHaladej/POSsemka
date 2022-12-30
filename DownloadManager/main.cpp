@@ -11,6 +11,7 @@
 #include <regex>
 #include "FTP_Exception.h"
 #include "FTP_Client.h"
+#include "Manager.h"
 //
 #define HOSTNAME 1
 #define PORT 2
@@ -48,6 +49,9 @@ void loop_main(const std::string &hostName, const std::string &port = "10022")
 
 int main(int argc, char* argv[])
 {
+    Manager manager;
+    manager.vyberProtocol();
+
     // HTTP
     try
     {
@@ -137,10 +141,9 @@ int main(int argc, char* argv[])
     try
     {
         if(argc == MIN_ARGS)
-//            loop_main(argv[HOSTNAME]);
-            loop_main("dziaba@frios2.fri.uniza.sk");
+            loop_main(argv[HOSTNAME]);
         else if(argc == MAX_ARGS)
-            loop_main("dziaba@frios2.fri.uniza.sk", "10022");
+            loop_main(argv[HOSTNAME], argv[PORT]);
         else
             throw FTP_Exception("Usage: cli hostname [port]");
     } catch (FTP_Exception& e)

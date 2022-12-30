@@ -7,18 +7,18 @@
 #include "FTP_Exception.h"
 
 // CC -> Control Connection
-void sendCommandToCC(FTP_Connect &CC, std::string command)
+void sendCommandToCC(FTP_Spojenie &CC, std::string command)
 {
     if(command.find("\r\n") == std::string::npos)
         command += "\r\n";
 
-    CC.writeLineFromSocket(command);
+    CC.zapisRiadokDoSocketu(command);
 }
 
 // CC -> Control Connection
-std::string verifyResponseFromCC(FTP_Connect &CC)
+std::string verifyResponseFromCC(FTP_Spojenie &CC)
 {
-    std::string responseFromServer = CC.readLineFromSocket();
+    std::string responseFromServer = CC.citajRiadokZoSocketu();
 
     //special case if server needs to disconnect
     if(responseFromServer.find(FTP_Code::CLOSING_CMD) == 0)
@@ -44,7 +44,7 @@ void FTP_Client::sendAndReceiveCommands(std::string command)
 //connects the control connection
 void FTP_Client::connect(const std::string &hostName, const std::string &port)
 {
-    this->CC_.connect(hostName, port);
+    this->CC_.vytvorSpojenie(hostName, port);
     this->lastResponseFromCC_ = verifyResponseFromCC(this->CC_);
 }
 

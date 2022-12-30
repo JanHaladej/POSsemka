@@ -3,7 +3,7 @@
 //
 #include <string>
 
-#include "FTP_Connect.h"
+#include "FTP_Spojenie.h"
 #include "FTP_Exception.h"
 
 #ifndef POSSEMKA_FTP_KLIENT_H
@@ -14,8 +14,8 @@ class FTP_Client
 {
     private:
         std::string lastResponseFromCC_;
-        FTP_Connect CC_;                   // controlConnection
-        FTP_Connect DC_;                   // dataConnection
+        FTP_Spojenie CC_;                   // controlConnection
+        FTP_Spojenie DC_;                   // dataConnection
 
     public:
         const std::string& getResponse() const

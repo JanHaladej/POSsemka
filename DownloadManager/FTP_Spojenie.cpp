@@ -2,18 +2,18 @@
 // Created by matej on 12/30/2022.
 //
 
-#include "FTP_Connect.h"
+#include "FTP_Spojenie.h"
 #include "FTP_Exception.h"
 
-void FTP_Connect::connect(const std::string &hostName, const std::string &port)
+void FTP_Spojenie::vytvorSpojenie(const std::string &hostName, const std::string &port)
 {
     try
     {
-        //resolves host name
+        // spracuje host name
         tcp::resolver resolver(this->ios_);
         tcp::resolver::query query(hostName, port);
 
-        //connects to host
+        // vytvori spojenie do host
         boost::asio::connect(this->socket_, resolver.resolve(query));
     }
     catch(boost::system::system_error &)
@@ -23,7 +23,7 @@ void FTP_Connect::connect(const std::string &hostName, const std::string &port)
 }
 
 //reads '\r\n' terminated line in
-std::string FTP_Connect::readLineFromSocket()
+std::string FTP_Spojenie::citajRiadokZoSocketu()
 {
     std::string retVal;
     boost::asio::streambuf responseBuffer;
@@ -41,7 +41,7 @@ std::string FTP_Connect::readLineFromSocket()
     return retVal;
 }
 
-void FTP_Connect::writeLineFromSocket(const std::string &buffer)
+void FTP_Spojenie::zapisRiadokDoSocketu(const std::string &buffer)
 {
     boost::asio::streambuf b;
     std::ostream os(&b);
