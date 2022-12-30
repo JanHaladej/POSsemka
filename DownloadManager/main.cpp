@@ -35,7 +35,7 @@ void verify_Hostname_Port(const std::string &hostName, const std::string &port)
         throw FTP_Exception("HostName is invalid! Please insert valid hostName!");
 }
 
-void loop_main(const std::string &hostName, const std::string &port = "21")
+void loop_main(const std::string &hostName, const std::string &port = "10022")
 {
     verify_Hostname_Port(hostName, port);
 
@@ -137,9 +137,10 @@ int main(int argc, char* argv[])
     try
     {
         if(argc == MIN_ARGS)
-            loop_main(argv[HOSTNAME]);
+//            loop_main(argv[HOSTNAME]);
+            loop_main("dziaba@frios2.fri.uniza.sk");
         else if(argc == MAX_ARGS)
-            loop_main(argv[1], argv[PORT]);
+            loop_main("dziaba@frios2.fri.uniza.sk", "10022");
         else
             throw FTP_Exception("Usage: cli hostname [port]");
     } catch (FTP_Exception& e)
