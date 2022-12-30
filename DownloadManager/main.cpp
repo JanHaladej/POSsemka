@@ -4,10 +4,51 @@
 #include <string>
 #include <boost/asio.hpp>
 
+// ******************************************************************************************
+// ******************************************************************************************
+//                                          Pre FTP
+#include <boost/lexical_cast.hpp>
+#include <regex>
+#include "FTP_Exception.h"
+#include "FTP_Client.h"
+//
+#define HOSTNAME 1
+#define PORT 2
+#define MAX_ARGS 3
+#define MIN_ARGS 2
+
+
 using boost::asio::ip::tcp;
+
+void verify_Hostname_Port(const std::string &hostName, const std::string &port)
+{
+    try
+    {
+        boost::lexical_cast<int>(port);
+    } catch(boost::bad_lexical_cast &){
+        throw FTP_Exception("Port must be a number! Please insert valid port number!");
+    }
+
+    std::regex r("[A-Za-z0-9\\-\\.]+");
+
+    if(!std::regex_match(hostName, r))
+        throw FTP_Exception("HostName is invalid! Please insert valid hostName!");
+}
+
+void loop_main(const std::string &hostName, const std::string &port = "21")
+{
+    verify_Hostname_Port(hostName, port);
+
+    FTP_Client FTP;
+    FTP.connect(hostName, port);
+
+}
+// ******************************************************************************************
+// ******************************************************************************************
 
 int main(int argc, char* argv[])
 {
+    // HTTP
     try
     {
         if (argc != 3)
@@ -88,6 +129,20 @@ int main(int argc, char* argv[])
             throw boost::system::system_error(error);
     }
     catch (std::exception& e)
+    {
+        std::cout << "Exception: " << e.what() << "\n";
+    }
+
+    // FTP
+    try
+    {
+        if(argc == MIN_ARGS)
+            mainLoop(argv[HOSTNAME]);
+        else if(argc == MAX_ARGS)
+            mainLoop(argv[HOSTNAME], argv[PORT]);
+        else
+            throw FTPException("Usage: cli hostname [port]");
+    } catch (FTP_Exception& e)
     {
         std::cout << "Exception: " << e.what() << "\n";
     }
