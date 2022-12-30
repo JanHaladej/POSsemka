@@ -28,7 +28,7 @@ class FTP_Connect
         }
         ~FTP_Connect()
         {
-            this->close();
+            this->closeSocket();
         }
 };
 

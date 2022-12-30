@@ -4,24 +4,25 @@
 
 #include "FTP_Client.h"
 #include "FTP_Code.h"
+#include "FTP_Exception.h"
 
 // CC -> Control Connection
-void sendCommandToCC(FTP_Connect() &CC, std::string command)
+void sendCommandToCC(FTP_Connect &CC, std::string command)
 {
     if(command.find("\r\n") == std::string::npos)
         command += "\r\n";
 
-    CC.writeLine(command);
+    CC.writeLineFromSocket(command);
 }
 
 // CC -> Control Connection
 std::string verifyResponseFromCC(FTP_Connect &CC)
 {
-    std::string responseFromServer = CC.readLine();
+    std::string responseFromServer = CC.readLineFromSocket();
 
     //special case if server needs to disconnect
     if(responseFromServer.find(FTP_Code::CLOSING_CMD) == 0)
-        throw FTP_Connect(responseFromServer);
+        throw FTP_Exception(responseFromServer);
 
     return responseFromServer;
 
@@ -49,7 +50,7 @@ void FTP_Client::connect(const std::string &hostName, const std::string &port)
 
 void FTP_Client::login(const std::string &userName, const std::string &password)
 {
-    this->sendAndReceiveCommands("USER " + username);
+    this->sendAndReceiveCommands("USER " + userName);
     this->sendAndReceiveCommands("PASS " + password);
 }
 

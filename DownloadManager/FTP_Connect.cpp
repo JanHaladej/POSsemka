@@ -14,11 +14,11 @@ void FTP_Connect::connect(const std::string &hostName, const std::string &port)
         tcp::resolver::query query(hostName, port);
 
         //connects to host
-        boost::asio::connect(this->socket, resolver.resolve(query));
+        boost::asio::connect(this->socket_, resolver.resolve(query));
     }
     catch(boost::system::system_error &)
     {
-        throw FTPException("Error connecting to host");
+        throw FTP_Exception("Error connecting to host");
     }
 }
 
@@ -48,7 +48,7 @@ void FTP_Connect::writeLineFromSocket(const std::string &buffer)
     os << buffer;
     try
     {
-        boost::asio::write(this->socket, b);
+        boost::asio::write(this->socket_, b);
     } catch(boost::system::system_error &)
     {
         throw FTP_Exception("Error writing line");

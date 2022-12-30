@@ -5,8 +5,11 @@
       <paths name="frios2.fri.uniza.sk (9bfbb8b3-f56b-41d0-84bb-e360ac546cee)">
         <serverdata>
           <mappings>
-            <mapping local="$PROJECT_DIR$" web="/" />
+            <mapping deploy="/tmp/tmp.blkFxgRD9C" local="$PROJECT_DIR$/DownloadManager" />
           </mappings>
+          <excludedPaths>
+            <excludedPath local="true" path="$PROJECT_DIR$/DownloadManager/cmake-build-debug" />
+          </excludedPaths>
         </serverdata>
       </paths>
     </serverData>

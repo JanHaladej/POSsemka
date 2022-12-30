@@ -40,7 +40,7 @@ void loop_main(const std::string &hostName, const std::string &port = "21")
     verify_Hostname_Port(hostName, port);
 
     FTP_Client FTP;
-    FTP.connect(hostName, port);
+    //FTP.connect(hostName, port);
 
 }
 // ******************************************************************************************
@@ -137,11 +137,11 @@ int main(int argc, char* argv[])
     try
     {
         if(argc == MIN_ARGS)
-            mainLoop(argv[HOSTNAME]);
+            loop_main(argv[HOSTNAME]);
         else if(argc == MAX_ARGS)
-            mainLoop(argv[HOSTNAME], argv[PORT]);
+            loop_main(argv[1], argv[PORT]);
         else
-            throw FTPException("Usage: cli hostname [port]");
+            throw FTP_Exception("Usage: cli hostname [port]");
     } catch (FTP_Exception& e)
     {
         std::cout << "Exception: " << e.what() << "\n";

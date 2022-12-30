@@ -8,38 +8,38 @@
 		<Option virtualFolders="CMake Files\;"/>
 		<Build>
 			<Target title="all">
-				<Option working_dir="/tmp/tmp.lLyWbiYxRb/cmake-build-debug"/>
+				<Option working_dir="/tmp/tmp.blkFxgRD9C/cmake-build-debug"/>
 				<Option type="4"/>
 				<MakeCommands>
-					<Build command="/usr/bin/gmake -j4 -f &quot;/tmp/tmp.lLyWbiYxRb/cmake-build-debug/Makefile&quot;  VERBOSE=1 all"/>
-					<CompileFile command="/usr/bin/gmake -j4 -f &quot;/tmp/tmp.lLyWbiYxRb/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
-					<Clean command="/usr/bin/gmake -j4 -f &quot;/tmp/tmp.lLyWbiYxRb/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
-					<DistClean command="/usr/bin/gmake -j4 -f &quot;/tmp/tmp.lLyWbiYxRb/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<Build command="/usr/bin/gmake -j4 -f &quot;/tmp/tmp.blkFxgRD9C/cmake-build-debug/Makefile&quot;  VERBOSE=1 all"/>
+					<CompileFile command="/usr/bin/gmake -j4 -f &quot;/tmp/tmp.blkFxgRD9C/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j4 -f &quot;/tmp/tmp.blkFxgRD9C/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j4 -f &quot;/tmp/tmp.blkFxgRD9C/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
 				</MakeCommands>
 			</Target>
 			<Target title="rebuild_cache">
-				<Option working_dir="/tmp/tmp.lLyWbiYxRb/cmake-build-debug"/>
+				<Option working_dir="/tmp/tmp.blkFxgRD9C/cmake-build-debug"/>
 				<Option type="4"/>
 				<MakeCommands>
-					<Build command="/usr/bin/gmake -j4 -f &quot;/tmp/tmp.lLyWbiYxRb/cmake-build-debug/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
-					<CompileFile command="/usr/bin/gmake -j4 -f &quot;/tmp/tmp.lLyWbiYxRb/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
-					<Clean command="/usr/bin/gmake -j4 -f &quot;/tmp/tmp.lLyWbiYxRb/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
-					<DistClean command="/usr/bin/gmake -j4 -f &quot;/tmp/tmp.lLyWbiYxRb/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<Build command="/usr/bin/gmake -j4 -f &quot;/tmp/tmp.blkFxgRD9C/cmake-build-debug/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
+					<CompileFile command="/usr/bin/gmake -j4 -f &quot;/tmp/tmp.blkFxgRD9C/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j4 -f &quot;/tmp/tmp.blkFxgRD9C/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j4 -f &quot;/tmp/tmp.blkFxgRD9C/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
 				</MakeCommands>
 			</Target>
 			<Target title="edit_cache">
-				<Option working_dir="/tmp/tmp.lLyWbiYxRb/cmake-build-debug"/>
+				<Option working_dir="/tmp/tmp.blkFxgRD9C/cmake-build-debug"/>
 				<Option type="4"/>
 				<MakeCommands>
-					<Build command="/usr/bin/gmake -j4 -f &quot;/tmp/tmp.lLyWbiYxRb/cmake-build-debug/Makefile&quot;  VERBOSE=1 edit_cache"/>
-					<CompileFile command="/usr/bin/gmake -j4 -f &quot;/tmp/tmp.lLyWbiYxRb/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
-					<Clean command="/usr/bin/gmake -j4 -f &quot;/tmp/tmp.lLyWbiYxRb/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
-					<DistClean command="/usr/bin/gmake -j4 -f &quot;/tmp/tmp.lLyWbiYxRb/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<Build command="/usr/bin/gmake -j4 -f &quot;/tmp/tmp.blkFxgRD9C/cmake-build-debug/Makefile&quot;  VERBOSE=1 edit_cache"/>
+					<CompileFile command="/usr/bin/gmake -j4 -f &quot;/tmp/tmp.blkFxgRD9C/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j4 -f &quot;/tmp/tmp.blkFxgRD9C/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j4 -f &quot;/tmp/tmp.blkFxgRD9C/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
 				</MakeCommands>
 			</Target>
 			<Target title="DownloadManager">
-				<Option output="/tmp/tmp.lLyWbiYxRb/cmake-build-debug/DownloadManager" prefix_auto="0" extension_auto="0"/>
-				<Option working_dir="/tmp/tmp.lLyWbiYxRb/cmake-build-debug"/>
+				<Option output="/tmp/tmp.blkFxgRD9C/cmake-build-debug/DownloadManager" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/tmp/tmp.blkFxgRD9C/cmake-build-debug"/>
 				<Option object_output="./"/>
 				<Option type="1"/>
 				<Option compiler="gcc"/>
@@ -53,15 +53,15 @@
 					<Add directory="/usr/include"/>
 				</Compiler>
 				<MakeCommands>
-					<Build command="/usr/bin/gmake -j4 -f &quot;/tmp/tmp.lLyWbiYxRb/cmake-build-debug/Makefile&quot;  VERBOSE=1 DownloadManager"/>
-					<CompileFile command="/usr/bin/gmake -j4 -f &quot;/tmp/tmp.lLyWbiYxRb/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
-					<Clean command="/usr/bin/gmake -j4 -f &quot;/tmp/tmp.lLyWbiYxRb/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
-					<DistClean command="/usr/bin/gmake -j4 -f &quot;/tmp/tmp.lLyWbiYxRb/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<Build command="/usr/bin/gmake -j4 -f &quot;/tmp/tmp.blkFxgRD9C/cmake-build-debug/Makefile&quot;  VERBOSE=1 DownloadManager"/>
+					<CompileFile command="/usr/bin/gmake -j4 -f &quot;/tmp/tmp.blkFxgRD9C/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j4 -f &quot;/tmp/tmp.blkFxgRD9C/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j4 -f &quot;/tmp/tmp.blkFxgRD9C/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
 				</MakeCommands>
 			</Target>
 			<Target title="DownloadManager/fast">
-				<Option output="/tmp/tmp.lLyWbiYxRb/cmake-build-debug/DownloadManager" prefix_auto="0" extension_auto="0"/>
-				<Option working_dir="/tmp/tmp.lLyWbiYxRb/cmake-build-debug"/>
+				<Option output="/tmp/tmp.blkFxgRD9C/cmake-build-debug/DownloadManager" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/tmp/tmp.blkFxgRD9C/cmake-build-debug"/>
 				<Option object_output="./"/>
 				<Option type="1"/>
 				<Option compiler="gcc"/>
@@ -75,17 +75,17 @@
 					<Add directory="/usr/include"/>
 				</Compiler>
 				<MakeCommands>
-					<Build command="/usr/bin/gmake -j4 -f &quot;/tmp/tmp.lLyWbiYxRb/cmake-build-debug/Makefile&quot;  VERBOSE=1 DownloadManager/fast"/>
-					<CompileFile command="/usr/bin/gmake -j4 -f &quot;/tmp/tmp.lLyWbiYxRb/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
-					<Clean command="/usr/bin/gmake -j4 -f &quot;/tmp/tmp.lLyWbiYxRb/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
-					<DistClean command="/usr/bin/gmake -j4 -f &quot;/tmp/tmp.lLyWbiYxRb/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<Build command="/usr/bin/gmake -j4 -f &quot;/tmp/tmp.blkFxgRD9C/cmake-build-debug/Makefile&quot;  VERBOSE=1 DownloadManager/fast"/>
+					<CompileFile command="/usr/bin/gmake -j4 -f &quot;/tmp/tmp.blkFxgRD9C/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j4 -f &quot;/tmp/tmp.blkFxgRD9C/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j4 -f &quot;/tmp/tmp.blkFxgRD9C/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
 				</MakeCommands>
 			</Target>
 		</Build>
-		<Unit filename="/tmp/tmp.lLyWbiYxRb/main.cpp">
+		<Unit filename="/tmp/tmp.blkFxgRD9C/main.cpp">
 			<Option target="DownloadManager"/>
 		</Unit>
-		<Unit filename="/tmp/tmp.lLyWbiYxRb/CMakeLists.txt">
+		<Unit filename="/tmp/tmp.blkFxgRD9C/CMakeLists.txt">
 			<Option virtualFolder="CMake Files\"/>
 		</Unit>
 	</Project>
