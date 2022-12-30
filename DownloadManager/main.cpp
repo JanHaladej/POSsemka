@@ -21,6 +21,7 @@
 
 using boost::asio::ip::tcp;
 
+<<<<<<< Updated upstream
 void verify_Hostname_Port(const std::string &hostName, const std::string &port)
 {
     try
@@ -139,6 +140,19 @@ int main(int argc, char* argv[])
 
     // FTP
     try
+=======
+int main(int argc, char* argv[])
+{
+    std::string prikaz;
+    std::string stranka;// = "kornhauserbus.sk";
+    std::string objekNaStiahnutie;// = "/images/background.png";
+    std::string protokol;
+    std::string priorita;
+    std::string cas;
+
+    /*
+    if (argc != 3)
+>>>>>>> Stashed changes
     {
         if(argc == MIN_ARGS)
             loop_main(argv[HOSTNAME]);
@@ -150,6 +164,11 @@ int main(int argc, char* argv[])
     {
         std::cout << "Exception: " << e.what() << "\n";
     }
+<<<<<<< Updated upstream
+=======
+    */
+
+>>>>>>> Stashed changes
 
     return 0;
 }
