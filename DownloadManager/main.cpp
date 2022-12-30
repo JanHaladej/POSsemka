@@ -3,6 +3,7 @@
 #include <ostream>
 #include <string>
 #include <boost/asio.hpp>
+#include <fstream>
 
 using boost::asio::ip::tcp;
 
@@ -78,18 +79,29 @@ int httpProtocol(std::string stranka, std::string objektNaStiahnutie){
             std::cout << header << "\n";
         std::cout << "\n";
 
+        //dotialto to vypisovalo ten datum, content, dlzka etc
+
         // Write whatever content we already have to output.
         //v bufferi je: HTTP/1.1 200 OK \r\nServer: openresty\r\nDate: Fri, 30
-        if (response.size() > 0)
-            std::cout << &response;
+        if (response.size() > 0){
+            //zapis textu do txt suboru
+            std::ofstream myfile;
+            myfile.open ("/home/haladej/testXXX.txt");
+            myfile << &response << std::endl;
+            myfile.close();
+            //zapis textu do txt suboru
+        }
+            //std::cout << &response;
 
+
+/*
         // Read until EOF, writing data to output as we go.
         boost::system::error_code error;
         while (boost::asio::read(socket, response,
                                  boost::asio::transfer_at_least(1), error))
             std::cout << &response;
         if (error != boost::asio::error::eof)
-            throw boost::system::system_error(error);
+            throw boost::system::system_error(error);*/
     }
     catch (std::exception& e)
     {
@@ -102,8 +114,8 @@ int httpProtocol(std::string stranka, std::string objektNaStiahnutie){
 int main(int argc, char* argv[])
 {
     std::string stranka= "pukalik.sk";
-    std::string objekNaStiahnutie = "/pos/dog.jpeg";
-    
+    std::string objekNaStiahnutie = "/pos/text.txt";
+
     httpProtocol(stranka, objekNaStiahnutie);
 
     return 0;
