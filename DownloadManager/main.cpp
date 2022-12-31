@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <vector>
 
+
 using boost::asio::ip::tcp;
 
 typedef struct paralelData {
@@ -27,6 +28,7 @@ typedef struct vlakno {
     int id;
     std::string stranka;
     std::string objektNaStiahnutie;
+    std::string cas;
 } VLAK;
 
 int httpProtocol(std::string stranka, std::string objektNaStiahnutie, int id){
@@ -120,12 +122,10 @@ int httpProtocol(std::string stranka, std::string objektNaStiahnutie, int id){
 
         // Read until EOF, writing data to output as we go.
         boost::system::error_code error;
-        int counter = 0;
         while (boost::asio::read(socket, response,boost::asio::transfer_at_least(1), error)) {
             myfile << &response;
-            std::cout<< id << " " <<counter<<std::endl;
-            counter++;
         }
+
         if (error != boost::asio::error::eof){
             throw boost::system::system_error(error);}
 
@@ -139,12 +139,27 @@ int httpProtocol(std::string stranka, std::string objektNaStiahnutie, int id){
     return 0;
 }
 
+void cakajNaCas(int hodiny, int minuty){
+    time_t givemetime = time(NULL);
+    std::string now = ctime(&givemetime);
+    int nowHH = stoi(now.substr(11,2));
+    int nowMM = stoi(now.substr(14,2));
+
+    while(nowHH <= hodiny && nowMM < minuty){
+        sleep(5);
+        givemetime = time(NULL);
+        std::string now = ctime(&givemetime);
+        nowHH = stoi(now.substr(11,2));
+        nowMM = stoi(now.substr(14,2));
+    }
+}
+
 void * vlaknoF(void * arg) {
     VLAK * data = static_cast<VLAK *>(arg);
 
-    //std::cout<<dataVlakna->stranka;
+    cakajNaCas(stoi(data->cas.substr(0,2)),stoi(data->cas.substr(3,2)));
 
-    httpProtocol(data->stranka, data->objektNaStiahnutie, data->id);
+    //httpProtocol(data->stranka, data->objektNaStiahnutie, data->id);
 
     pthread_exit(NULL);
 }
@@ -194,6 +209,7 @@ int main(int argc, char* argv[])
         poleProd[i].data = &spolData;
         poleProd[i].stranka = "pukalik.sk";
         poleProd[i].objektNaStiahnutie = "/pos/dog.jpeg";
+        poleProd[i].cas = "22:22";
         pthread_create(&poleVlakienProd[i],NULL,vlaknoF,&poleProd[i]);
     }
 
