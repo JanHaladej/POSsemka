@@ -9,6 +9,14 @@
 /tmp/tmp.lLyWbiYxRb/main.cpp
 iostream
 -
+istream
+-
+ostream
+-
 string
+-
+boost/asio.hpp
+-
+fstream
 -
 

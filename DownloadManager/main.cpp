@@ -4,10 +4,32 @@
 #include <string>
 #include <boost/asio.hpp>
 #include <fstream>
+#include <stdio.h>
+#include <pthread.h>
+#include <stdlib.h>
+#include <time.h>
+#include <unistd.h>
+#include <vector>
 
 using boost::asio::ip::tcp;
 
-int httpProtocol(std::string stranka, std::string objektNaStiahnutie){
+typedef struct paralelData {
+    int* buffer;
+    int kapacita;
+    int aktualne;
+    pthread_mutex_t * mutex;
+    pthread_cond_t * prazdny;
+    pthread_cond_t * odober;
+} PARDAT;
+
+typedef struct vlakno {
+    PARDAT* data;
+    int id;
+    std::string stranka;
+    std::string objektNaStiahnutie;
+} VLAK;
+
+int httpProtocol(std::string stranka, std::string objektNaStiahnutie, int id){
     try
     {
 
@@ -87,20 +109,23 @@ int httpProtocol(std::string stranka, std::string objektNaStiahnutie){
         if (response.size() > 0){
             //zapis textu do txt suboru
             //std::ofstream myfile;
-            myfile.open ("/home/haladej/imageXXX.jpeg");
+            myfile.open ("/home/haladej/image" + std::to_string(id) + ".jpeg");
             myfile << &response << std::endl;
             //myfile.close();
             //zapis textu do txt suboru
         }
-            //std::cout << &response;
+        //std::cout << &response;
 
 
 
         // Read until EOF, writing data to output as we go.
         boost::system::error_code error;
-        while (boost::asio::read(socket, response,
-                                 boost::asio::transfer_at_least(1), error))
+        int counter = 0;
+        while (boost::asio::read(socket, response,boost::asio::transfer_at_least(1), error)) {
             myfile << &response;
+            std::cout<< id << " " <<counter<<std::endl;
+            counter++;
+        }
         if (error != boost::asio::error::eof){
             throw boost::system::system_error(error);}
 
@@ -114,12 +139,71 @@ int httpProtocol(std::string stranka, std::string objektNaStiahnutie){
     return 0;
 }
 
+void * vlaknoF(void * arg) {
+    VLAK * data = static_cast<VLAK *>(arg);
+
+    //std::cout<<dataVlakna->stranka;
+
+    httpProtocol(data->stranka, data->objektNaStiahnutie, data->id);
+
+    pthread_exit(NULL);
+}
+
+
+
 int main(int argc, char* argv[])
-{
+{/*
     std::string stranka= "pukalik.sk";
     std::string objekNaStiahnutie = "/pos/dog.jpeg";
 
     httpProtocol(stranka, objekNaStiahnutie);
+*/
+
+    int kapacita = 3;
+    int buffer[kapacita];
+
+    pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+    pthread_cond_t prazdny, odober;
+    pthread_cond_init(&prazdny,NULL);
+    pthread_cond_init(&odober,NULL);
+
+    PARDAT spolData = {buffer, kapacita, 0, &mutex,&prazdny,&odober};
+/*
+    //std::vector<pthread_t> poleVlakien;
+    //std::vector<VLAK> poleVlakienData;
+    pthread_t poleVlakien[3];
+    VLAK poleVlakienData[3];
+
+    //VLAK data = {&spolData, 1, "pukalik.sk", "/pos/dog.jpeg"};
+
+    //poleVlakienData.push_back(data);
+
+    poleVlakienData[0].id = 1;
+    poleVlakienData[0].data = &spolData;
+    poleVlakienData[0].stranka = "pukalik.sk";
+    poleVlakienData[0].objektNaStiahnutie = "/pos/dog.jpeg";
+
+    pthread_create(&poleVlakien[0],NULL,vlaknoF,&poleVlakienData[0]);
+*/
+
+    pthread_t poleVlakienProd[3];
+    VLAK poleProd[3];
+
+    for (int i = 0; i < 3; i++) {
+        poleProd[i].id = i+1;
+        poleProd[i].data = &spolData;
+        poleProd[i].stranka = "pukalik.sk";
+        poleProd[i].objektNaStiahnutie = "/pos/dog.jpeg";
+        pthread_create(&poleVlakienProd[i],NULL,vlaknoF,&poleProd[i]);
+    }
+
+    for (int i = 0; i < 3; ++i) {
+        pthread_join( poleVlakienProd[i], NULL);
+    }
+
+    pthread_mutex_destroy(&mutex);
+    pthread_cond_destroy(&prazdny);
+    pthread_cond_destroy(&odober);
 
     return 0;
 }
