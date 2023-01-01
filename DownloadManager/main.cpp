@@ -15,12 +15,10 @@
 using boost::asio::ip::tcp;
 
 typedef struct paralelData {
-    int* buffer;
+    int (*buffer)[3];//[0] id [1] prio [2] 1 alebo 0 ci je stahovane
     int kapacita;
     int aktualne;
     pthread_mutex_t * mutex;
-    pthread_cond_t * prazdny;
-    pthread_cond_t * odober;
 } PARDAT;
 
 typedef struct vlakno {
@@ -29,6 +27,8 @@ typedef struct vlakno {
     std::string stranka;
     std::string objektNaStiahnutie;
     std::string cas;
+    int priorita;
+    std::string protokol;
 } VLAK;
 
 int httpProtocol(std::string stranka, std::string objektNaStiahnutie, int id){
@@ -145,81 +145,147 @@ void cakajNaCas(int hodiny, int minuty){
     int nowHH = stoi(now.substr(11,2));
     int nowMM = stoi(now.substr(14,2));
 
-    while(nowHH <= hodiny && nowMM < minuty){
+    while(!(nowHH == hodiny && nowMM == minuty)){
         sleep(5);
         givemetime = time(NULL);
         std::string now = ctime(&givemetime);
         nowHH = stoi(now.substr(11,2));
         nowMM = stoi(now.substr(14,2));
     }
+
 }
 
 void * vlaknoF(void * arg) {
-    VLAK * data = static_cast<VLAK *>(arg);
+    VLAK *data = static_cast<VLAK *>(arg);
 
-    cakajNaCas(stoi(data->cas.substr(0,2)),stoi(data->cas.substr(3,2)));
+    cakajNaCas(stoi(data->cas.substr(0, 2)), stoi(data->cas.substr(3, 2)));
 
-    //httpProtocol(data->stranka, data->objektNaStiahnutie, data->id);
+    //buffer bude mat id a prioritu 2d pole a tym padom mam vsetko potrebne a ked ma prioritu vacsiu ako veci v bufferi tak vtedy sa zacne stahovat
+    // alebo bude wait kym tam nebude nieco co ma mensiu prioritu
+
+    //ukladat ich do buffera
+    pthread_mutex_lock(data->data->mutex);
+
+    //ak nie si plny tak tam uloz cisla
+    data->data->buffer[data->data->aktualne][0] = data->id;
+    data->data->buffer[data->data->aktualne][1] = data->priorita;
+    data->data->buffer[data->data->aktualne][2] = 0;
+    data->data->aktualne++;
+
+    pthread_mutex_unlock(data->data->mutex);
+
+    for (int i = 0; i < data->data->aktualne; ++i) {
+        std::cout
+                << std::to_string(data->data->buffer[i][0]) + " | " + std::to_string(data->data->buffer[i][1]) + " | " +
+                   std::to_string(data->data->buffer[i][2]) + "\n";
+    }
+
+    std::cout << "-----------------------\n";
+
+    if (data->protokol == "http") {
+    httpProtocol(data->stranka, data->objektNaStiahnutie, data->id);
+    }
 
     pthread_exit(NULL);
 }
-
-
-
-int main(int argc, char* argv[])
-{/*
-    std::string stranka= "pukalik.sk";
-    std::string objekNaStiahnutie = "/pos/dog.jpeg";
-
-    httpProtocol(stranka, objekNaStiahnutie);
-*/
-
-    int kapacita = 3;
-    int buffer[kapacita];
-
-    pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-    pthread_cond_t prazdny, odober;
-    pthread_cond_init(&prazdny,NULL);
-    pthread_cond_init(&odober,NULL);
-
-    PARDAT spolData = {buffer, kapacita, 0, &mutex,&prazdny,&odober};
 /*
-    //std::vector<pthread_t> poleVlakien;
-    //std::vector<VLAK> poleVlakienData;
-    pthread_t poleVlakien[3];
-    VLAK poleVlakienData[3];
+void * priorityCheckF(void * arg) {
+    PARDAT * data = static_cast<PARDAT *>(arg);
+    int maxPrioContainer[3];
+    int sumaPriorit = 0;
 
-    //VLAK data = {&spolData, 1, "pukalik.sk", "/pos/dog.jpeg"};
-
-    //poleVlakienData.push_back(data);
-
-    poleVlakienData[0].id = 1;
-    poleVlakienData[0].data = &spolData;
-    poleVlakienData[0].stranka = "pukalik.sk";
-    poleVlakienData[0].objektNaStiahnutie = "/pos/dog.jpeg";
-
-    pthread_create(&poleVlakien[0],NULL,vlaknoF,&poleVlakienData[0]);
-*/
-
-    pthread_t poleVlakienProd[3];
-    VLAK poleProd[3];
-
-    for (int i = 0; i < 3; i++) {
-        poleProd[i].id = i+1;
-        poleProd[i].data = &spolData;
-        poleProd[i].stranka = "pukalik.sk";
-        poleProd[i].objektNaStiahnutie = "/pos/dog.jpeg";
-        poleProd[i].cas = "22:22";
-        pthread_create(&poleVlakienProd[i],NULL,vlaknoF,&poleProd[i]);
+    for (int i = 0; i < data->kapacita; ++i) {
+        sumaPriorit += data->buffer[i][1];
     }
 
-    for (int i = 0; i < 3; ++i) {
-        pthread_join( poleVlakienProd[i], NULL);
+    while(max) {
+        printf("MAXXXXXXXXXXXXXXX! %d\n",max);
+        pthread_mutex_lock(dataH->mutex);
+        printf("Consumer ide vyberat, aktualne tam je %d cisel!\n",dataH->aktualne);
+        while (dataH->aktualne == 0 ) {
+            printf("Consumer CAKA, je prazdny buffer!\n");
+            pthread_cond_wait(dataH->odober, dataH->mutex);
+        }
+        printf("Consumer berie %d cisel z bufferu!\n", dataH->aktualne);
+
+        for (int y = 0; y < dataH->aktualne; y++) {
+            printf("Consumer krici cislo %d !\n", dataH->buffer[y]);
+            dataH->buffer[y] = 0;
+            max = max-1;
+        }
+        dataH->aktualne = 0;
+
+        pthread_cond_signal(dataH->prazdny);
+        pthread_mutex_unlock(dataH->mutex);
+    }
+
+    printf("Consumer konci\n");
+    pthread_exit(NULL);
+}
+*/
+
+std::string* splitstr(std::string str, std::string deli = " ")
+{
+    std::string* polePrikazov = new std::string[6]; // ci treba dat delete ked je to vo funkcii lebo unmap mi pise ze to nevie najst ked dam delete
+    int count = 0;
+    int start = 0;
+    int end = str.find(deli);
+    while (end != -1 && polePrikazov[4].empty() == 1) {
+        polePrikazov[count] = str.substr(start, end - start);
+        count++;
+        start = end + deli.size();
+        end = str.find(deli, start);
+    }
+
+    polePrikazov[count] = str.substr(start, end - start);
+
+    return polePrikazov;
+}
+
+int main(int argc, char* argv[])
+{
+    int kapacita = 3;
+    int buffer[kapacita][3];
+
+    pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+    PARDAT spolData = {buffer, kapacita, 0, &mutex};
+
+    int pocetVlakien = 3;
+    pthread_t poleVlakien[pocetVlakien];
+    VLAK poleData[pocetVlakien];
+
+    std::string userInput;
+    std::string* strPtr;
+    int counter = 0;
+
+    while(userInput != "exit" && pocetVlakien > counter) {
+        std::cout << "Ocakavam prikaz" << std::endl;
+        getline(std::cin, userInput);// download http pukalik.sk /pos/dog.jpeg priorita cas
+        strPtr = splitstr(userInput);
+        std::cout << "\n";
+
+        if (strPtr[0] == "download") {
+        poleData[counter].id = counter + 1;
+        poleData[counter].data = &spolData;
+        poleData[counter].protokol = strPtr[1];
+        poleData[counter].stranka = strPtr[2];
+        poleData[counter].objektNaStiahnutie = strPtr[3];
+        poleData[counter].priorita = stoi(strPtr[4]);
+        poleData[counter].cas = strPtr[5];
+        pthread_create(&poleVlakien[counter], NULL, vlaknoF, &poleData[counter]);
+        }
+
+        counter++;
+    }
+
+    //priorityCheckF(&spolData);
+
+    for (int i = 0; i < pocetVlakien; ++i) {
+        pthread_join( poleVlakien[i], NULL);
     }
 
     pthread_mutex_destroy(&mutex);
-    pthread_cond_destroy(&prazdny);
-    pthread_cond_destroy(&odober);
 
     return 0;
 }
