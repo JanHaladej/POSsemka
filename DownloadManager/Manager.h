@@ -2,7 +2,7 @@
 // Created by matej on 12/30/2022.
 //
 
-#include "FTP_Exception.h"
+#include <iostream>
 
 #ifndef DOWNLOADMANAGER_MANAGER_H
 #define DOWNLOADMANAGER_MANAGER_H
@@ -37,7 +37,7 @@ class Manager
         {
             std::cin >> number_string;
             number = atoi(number_string);
-        } catch (FTP_Exception& e)
+        } catch (std::exception& e)
         {
             std::cout << "Exception: " << e.what() << "\n";
         }
@@ -64,7 +64,11 @@ class Manager
                 vyberProtocol();
         }
     }
-        Protocol getProtocol();
+
+    Protocol getProtocol() const
+    {
+        return this->protocol;
+    };
 };
 
 
