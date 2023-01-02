@@ -15,7 +15,7 @@
 using boost::asio::ip::tcp;
 
 typedef struct paralelData {
-    int (*buffer)[3];//[0] id [1] prio [2] 1 alebo 0 ci je stahovane
+    int (*buffer)[3];//[0] id [1] prio [2] 1 stahuje 0 nestahuje 2 pauznute 3 zrusene
     int kapacita;
     int aktualne;
     pthread_mutex_t * mutex;
@@ -34,7 +34,7 @@ typedef struct vlakno {
 int httpProtocol(std::string stranka, std::string objektNaStiahnutie, int id){
     try
     {
-
+        int velkostDatCoUzPrislo = 0;
         boost::asio::io_context io_context; // zakladne I/O funkcionality OS - posielanie streamov
 
         // Get a list of endpoints corresponding to the server name.
@@ -57,6 +57,7 @@ int httpProtocol(std::string stranka, std::string objektNaStiahnutie, int id){
         std::ostream request_stream(&request); // vpis do streamu -> request co sa posiela -> informacie -> ostream == output stream
         request_stream << "GET " << objektNaStiahnutie << " HTTP/1.0\r\n";
         request_stream << "Host: " << stranka << "\r\n";
+        request_stream << "Range: bytes="<< velkostDatCoUzPrislo <<"-" << "\r\n";
         request_stream << "Accept: */*\r\n";
         request_stream << "Connection: close\r\n\r\n";
 
@@ -87,7 +88,7 @@ int httpProtocol(std::string stranka, std::string objektNaStiahnutie, int id){
         //The HTTP 200 OK success status response code indicates that the request has succeeded.
         // A 200 response is cacheable by default. The meaning of a success depends on the HTTP request method: GET : The resource
         // has been fetched and is transmitted in the message body.
-        if (status_code != 200)
+        if (status_code != 200 && status_code != 206)
         {
             std::cout << "Response returned with status code " << status_code << "\n";
             return 1;
@@ -111,7 +112,8 @@ int httpProtocol(std::string stranka, std::string objektNaStiahnutie, int id){
         if (response.size() > 0){
             //zapis textu do txt suboru
             //std::ofstream myfile;
-            myfile.open ("/home/haladej/image" + std::to_string(id) + ".jpeg");
+            myfile.open ("/home/haladej/image" + std::to_string(id) + ".jpeg", std::ofstream::app);
+            velkostDatCoUzPrislo += response.size();
             myfile << &response << std::endl;
             //myfile.close();
             //zapis textu do txt suboru
@@ -123,7 +125,9 @@ int httpProtocol(std::string stranka, std::string objektNaStiahnutie, int id){
         // Read until EOF, writing data to output as we go.
         boost::system::error_code error;
         while (boost::asio::read(socket, response,boost::asio::transfer_at_least(1), error)) {
+            velkostDatCoUzPrislo += response.size();
             myfile << &response;
+            //std::cout << velkostDatCoUzPrislo << std::endl;
         }
 
         if (error != boost::asio::error::eof){
@@ -186,18 +190,39 @@ void * vlaknoF(void * arg) {
     httpProtocol(data->stranka, data->objektNaStiahnutie, data->id);
     }
 
-    pthread_exit(NULL);
-}
-/*
-void * priorityCheckF(void * arg) {
-    PARDAT * data = static_cast<PARDAT *>(arg);
-    int maxPrioContainer[3];
-    int sumaPriorit = 0;
+    pthread_mutex_lock(data->data->mutex);//po dostahovani nastav hodnoty
 
-    for (int i = 0; i < data->kapacita; ++i) {
-        sumaPriorit += data->buffer[i][1];
+    for (int i = 0; i < data->data->kapacita; ++i) {
+        if (data->data->buffer[i][0] = data->id){//najdi sam seba
+            //zapis do suboru TO DO
+            data->data->buffer[i][1] = 0;
+            data->data->buffer[i][2] = 3;
+        }
     }
 
+    pthread_mutex_unlock(data->data->mutex);
+
+    pthread_exit(NULL);
+}
+
+void * priorityCheckF(void * arg, int pocetPovolenychNaStahovanie) {
+    PARDAT * data = static_cast<PARDAT *>(arg);
+    int poleStahujucich[pocetPovolenychNaStahovanie][2];// id a prio
+
+    if (countAktualneStahujucichSa < pocetPovolenychNaStahovanie){
+        //ak sa da viacej stahovat tak nastav 1 tam kde je vacsia priorita
+        for (int i = 0; i < data->kapacita; ++i) {
+            if(data->buffer[i][2] != 1){
+                for (int j = 0; j < data->kapacita; ++j) {
+                    if (data->buffer[i][1] > data->buffer[j][1] && data->buffer[j][2] == 1){
+
+                    }
+                }
+            }
+        }
+    }
+
+/*
     while(max) {
         printf("MAXXXXXXXXXXXXXXX! %d\n",max);
         pthread_mutex_lock(dataH->mutex);
@@ -219,10 +244,10 @@ void * priorityCheckF(void * arg) {
         pthread_mutex_unlock(dataH->mutex);
     }
 
-    printf("Consumer konci\n");
+    printf("Consumer konci\n");*/
     pthread_exit(NULL);
 }
-*/
+
 
 std::string* splitstr(std::string str, std::string deli = " ")
 {
@@ -279,7 +304,7 @@ int main(int argc, char* argv[])
         counter++;
     }
 
-    //priorityCheckF(&spolData);
+    priorityCheckF(&spolData, 2);
 
     for (int i = 0; i < pocetVlakien; ++i) {
         pthread_join( poleVlakien[i], NULL);
