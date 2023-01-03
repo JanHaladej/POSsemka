@@ -85,6 +85,9 @@
 		<Unit filename="/tmp/tmp.lLyWbiYxRb/main.cpp">
 			<Option target="DownloadManager"/>
 		</Unit>
+		<Unit filename="/tmp/tmp.lLyWbiYxRb/main.h">
+			<Option target="DownloadManager"/>
+		</Unit>
 		<Unit filename="/tmp/tmp.lLyWbiYxRb/CMakeLists.txt">
 			<Option virtualFolder="CMake Files\"/>
 		</Unit>

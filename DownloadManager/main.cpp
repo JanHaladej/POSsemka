@@ -11,25 +11,10 @@
 #include <unistd.h>
 #include <vector>
 
+typedef void * (*THREADFUNCPTR)(void *);
+
 
 using boost::asio::ip::tcp;
-
-typedef struct paralelData {
-    int (*buffer)[3];//[0] id [1] prio [2] 1 stahuje 0 nestahuje 2 pauznute 3 zrusene
-    int kapacita;
-    int aktualne;
-    pthread_mutex_t * mutex;
-} PARDAT;
-
-typedef struct vlakno {
-    PARDAT* data;
-    int id;
-    std::string stranka;
-    std::string objektNaStiahnutie;
-    std::string cas;
-    int priorita;
-    std::string protokol;
-} VLAK;
 
 int httpProtocol(std::string stranka, std::string objektNaStiahnutie, int id){
     try
@@ -143,111 +128,88 @@ int httpProtocol(std::string stranka, std::string objektNaStiahnutie, int id){
     return 0;
 }
 
-void cakajNaCas(int hodiny, int minuty){
-    time_t givemetime = time(NULL);
-    std::string now = ctime(&givemetime);
-    int nowHH = stoi(now.substr(11,2));
-    int nowMM = stoi(now.substr(14,2));
+class VlaknoObj {
+private:
+    int id;
+    std::string stranka;
+    std::string objektNaStiahnutie;
+    std::string cas;
+    int priorita;
+    std::string protokol;
+    pthread_mutex_t * mutex;
 
-    while(!(nowHH == hodiny && nowMM == minuty)){
-        sleep(5);
-        givemetime = time(NULL);
+    int doposialStiahnute;
+    int state;
+    pthread_t vlakno;
+
+public:
+    VlaknoObj(int id, std::string protokol, std::string stranka, std::string objektNaStiahnutie, int priorita, std::string cas, pthread_mutex_t mutex){
+        this->id = id;
+        this->stranka = stranka;
+        this->objektNaStiahnutie = objektNaStiahnutie;
+        this->cas = cas;
+        this->priorita = priorita;
+        this->protokol = protokol;
+        this->mutex = &mutex;
+
+        doposialStiahnute = 0;
+        state = 0;
+
+        vytvorVlakno();
+    }
+
+    void cakajNaCas(int hodiny, int minuty){
+        time_t givemetime = time(NULL);
         std::string now = ctime(&givemetime);
-        nowHH = stoi(now.substr(11,2));
-        nowMM = stoi(now.substr(14,2));
-    }
+        int nowHH = stoi(now.substr(11,2));
+        int nowMM = stoi(now.substr(14,2));
 
-}
-
-void * vlaknoF(void * arg) {
-    VLAK *data = static_cast<VLAK *>(arg);
-
-    cakajNaCas(stoi(data->cas.substr(0, 2)), stoi(data->cas.substr(3, 2)));
-
-    //buffer bude mat id a prioritu 2d pole a tym padom mam vsetko potrebne a ked ma prioritu vacsiu ako veci v bufferi tak vtedy sa zacne stahovat
-    // alebo bude wait kym tam nebude nieco co ma mensiu prioritu
-
-    //ukladat ich do buffera
-    pthread_mutex_lock(data->data->mutex);
-
-    //ak nie si plny tak tam uloz cisla
-    data->data->buffer[data->data->aktualne][0] = data->id;
-    data->data->buffer[data->data->aktualne][1] = data->priorita;
-    data->data->buffer[data->data->aktualne][2] = 0;
-    data->data->aktualne++;
-
-    pthread_mutex_unlock(data->data->mutex);
-
-    for (int i = 0; i < data->data->aktualne; ++i) {
-        std::cout
-                << std::to_string(data->data->buffer[i][0]) + " | " + std::to_string(data->data->buffer[i][1]) + " | " +
-                   std::to_string(data->data->buffer[i][2]) + "\n";
-    }
-
-    std::cout << "-----------------------\n";
-
-    if (data->protokol == "http") {
-    httpProtocol(data->stranka, data->objektNaStiahnutie, data->id);
-    }
-
-    pthread_mutex_lock(data->data->mutex);//po dostahovani nastav hodnoty
-
-    for (int i = 0; i < data->data->kapacita; ++i) {
-        if (data->data->buffer[i][0] = data->id){//najdi sam seba
-            //zapis do suboru TO DO
-            data->data->buffer[i][1] = 0;
-            data->data->buffer[i][2] = 3;
+        while(!(nowHH == hodiny && nowMM == minuty)){
+            sleep(5);
+            givemetime = time(NULL);
+            std::string now = ctime(&givemetime);
+            nowHH = stoi(now.substr(11,2));
+            nowMM = stoi(now.substr(14,2));
         }
+
     }
 
-    pthread_mutex_unlock(data->data->mutex);
+    void * vlaknoF(void * arg) {
 
-    pthread_exit(NULL);
-}
+        if (this->protokol == "http") {
+            httpProtocol(this->stranka, this->objektNaStiahnutie, this->id);
+        } else if (this->protokol == "https") {
 
-void * priorityCheckF(void * arg, int pocetPovolenychNaStahovanie) {
-    PARDAT * data = static_cast<PARDAT *>(arg);
-    int poleStahujucich[pocetPovolenychNaStahovanie][2];// id a prio
+        } else if (this->protokol == "ftp") {
 
-    if (countAktualneStahujucichSa < pocetPovolenychNaStahovanie){
-        //ak sa da viacej stahovat tak nastav 1 tam kde je vacsia priorita
-        for (int i = 0; i < data->kapacita; ++i) {
-            if(data->buffer[i][2] != 1){
-                for (int j = 0; j < data->kapacita; ++j) {
-                    if (data->buffer[i][1] > data->buffer[j][1] && data->buffer[j][2] == 1){
+        } else if (this->protokol == "ftps") {
 
-                    }
-                }
-            }
         }
+
+        pthread_exit(NULL);
     }
 
-/*
-    while(max) {
-        printf("MAXXXXXXXXXXXXXXX! %d\n",max);
-        pthread_mutex_lock(dataH->mutex);
-        printf("Consumer ide vyberat, aktualne tam je %d cisel!\n",dataH->aktualne);
-        while (dataH->aktualne == 0 ) {
-            printf("Consumer CAKA, je prazdny buffer!\n");
-            pthread_cond_wait(dataH->odober, dataH->mutex);
-        }
-        printf("Consumer berie %d cisel z bufferu!\n", dataH->aktualne);
+    void vytvorVlakno() {
 
-        for (int y = 0; y < dataH->aktualne; y++) {
-            printf("Consumer krici cislo %d !\n", dataH->buffer[y]);
-            dataH->buffer[y] = 0;
-            max = max-1;
-        }
-        dataH->aktualne = 0;
+        cakajNaCas(stoi(cas.substr(0, 2)), stoi(cas.substr(3, 2)));
 
-        pthread_cond_signal(dataH->prazdny);
-        pthread_mutex_unlock(dataH->mutex);
+        pthread_create(&vlakno, NULL, (THREADFUNCPTR) &VlaknoObj::vlaknoF, this);
+
     }
 
-    printf("Consumer konci\n");*/
-    pthread_exit(NULL);
-}
+    int getPriorita(){
+        return this->priorita;
+    }
 
+    void setState(int state){
+        this->state=state;
+    }
+
+    int getState(){
+        return this->state;
+    }
+
+};
 
 std::string* splitstr(std::string str, std::string deli = " ")
 {
@@ -269,48 +231,28 @@ std::string* splitstr(std::string str, std::string deli = " ")
 
 int main(int argc, char* argv[])
 {
-    int kapacita = 3;
-    int buffer[kapacita][3];
-
-    pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-
-    PARDAT spolData = {buffer, kapacita, 0, &mutex};
-
-    int pocetVlakien = 3;
-    pthread_t poleVlakien[pocetVlakien];
-    VLAK poleData[pocetVlakien];
 
     std::string userInput;
     std::string* strPtr;
-    int counter = 0;
+    int counter=0;
 
-    while(userInput != "exit" && pocetVlakien > counter) {
+    std::vector<VlaknoObj*> vectorObjektov;
+    pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+    while(userInput != "exit") {
         std::cout << "Ocakavam prikaz" << std::endl;
-        getline(std::cin, userInput);// download http pukalik.sk /pos/dog.jpeg priorita cas
+        getline(std::cin, userInput);// download http pukalik.sk /pos/dog.jpeg priorita cas  // download http pukalik.sk /pos/dog.jpeg 12 22:34
         strPtr = splitstr(userInput);
         std::cout << "\n";
 
         if (strPtr[0] == "download") {
-        poleData[counter].id = counter + 1;
-        poleData[counter].data = &spolData;
-        poleData[counter].protokol = strPtr[1];
-        poleData[counter].stranka = strPtr[2];
-        poleData[counter].objektNaStiahnutie = strPtr[3];
-        poleData[counter].priorita = stoi(strPtr[4]);
-        poleData[counter].cas = strPtr[5];
-        pthread_create(&poleVlakien[counter], NULL, vlaknoF, &poleData[counter]);
+            vectorObjektov.push_back(new VlaknoObj(counter, strPtr[1], strPtr[2], strPtr[3], stoi(strPtr[4]), strPtr[5], mutex));
         }
 
         counter++;
     }
 
-    priorityCheckF(&spolData, 2);
-
-    for (int i = 0; i < pocetVlakien; ++i) {
-        pthread_join( poleVlakien[i], NULL);
-    }
-
-    pthread_mutex_destroy(&mutex);
+    //TO DO join na thready
 
     return 0;
 }
