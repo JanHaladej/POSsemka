@@ -43,14 +43,16 @@ public:
 
         doposialStiahnute = 0;
         velkostStahovanehoSuboru = 0;
-        state = 0;//0 default nestahuje sa //1 stahuje sa //2 pauznute //3 ukoncene //premysliet ci 2 a 3 je potrebne mat ak tie co sa nestahuje su v podstate pauznute
+        state = 0;//0 default nestahuje sa //1 stahuje sa //2 pauznute //3 ukoncene - cancel //4 dostahovane
 
-        vytvorVlakno();
+        //vytvorVlakno();// iba na skusku TO DO potom budem mat ten checkerF aby zapinalo vlakna
     }
 
     int httpProtocol(){
         try
         {
+            std::cout << this->id << " zacinam stahovat " << this->doposialStiahnute << std::endl;
+
             boost::asio::io_context io_context; // zakladne I/O funkcionality OS - posielanie streamov
 
             // Get a list of endpoints corresponding to the server name.
@@ -116,15 +118,12 @@ public:
 
             // Process the response headers.
             std::string header;
-            std::string contentLength;
             while (std::getline(response_stream, header) && header != "\r"){
                 //std::cout << header <<"\n";
-                    if (header.substr(0,16) == "Content-Length: ") {
-                        contentLength = header.substr(16,header.length()-16);
+                    if (header.substr(0,16) == "Content-Length: " && this->velkostStahovanehoSuboru == 0) {
+                        this->velkostStahovanehoSuboru = stoi(header.substr(16,header.length()-16));
                     }
                 }
-            std::cout << contentLength <<"\n";
-            std::cout << "\n";
 
             //dotialto to vypisovalo ten datum, content, dlzka etc
 
@@ -134,7 +133,7 @@ public:
             if (response.size() > 0){
                 //zapis textu do txt suboru
                 //std::ofstream myfile;
-                myfile.open ("/home/haladej/image" + std::to_string(id) + ".jpeg", std::ofstream::app);
+                myfile.open ("/home/haladej/image" + std::to_string(id) + ".jpeg", std::ofstream::app);// TO DO aby nebola koncovka jpeg ale to co ma byt - funkcia ktora parsne z nazvu suboru vsetko za bodkou napr
                 this->doposialStiahnute += response.size();
                 myfile << &response << std::endl;
                 //myfile.close();
@@ -156,6 +155,8 @@ public:
                 throw boost::system::system_error(error);}
 
             myfile.close();
+
+            std::cout << this->id << " stiahlo doteraz " << this->doposialStiahnute << std::endl;
         }
         catch (std::exception& e)
         {
@@ -187,6 +188,11 @@ public:
 
         if (this->protokol == "http") {
             httpProtocol();
+            if (this->doposialStiahnute >= this->velkostStahovanehoSuboru){
+                //pthread_mutex_lock(this->mutex);
+                state = 4;
+                //pthread_mutex_unlock(this->mutex);
+            }
             //std::cout << this->id << "   " << this->doposialStiahnute << std::endl;
         } else if (this->protokol == "https") {
 
@@ -200,9 +206,7 @@ public:
     }
 
     void vytvorVlakno() {
-
         pthread_create(&vlakno, NULL, (THREADFUNCPTR) &VlaknoObj::vlaknoF, this);
-
     }
 
     int getPriorita(){
@@ -210,7 +214,9 @@ public:
     }
 
     void setState(int state){
+        //(this->mutex);
         this->state=state;
+        //pthread_mutex_unlock(this->mutex);
     }
 
     int getState(){
@@ -227,6 +233,18 @@ public:
 
     int getID(){
         return this->id;
+    }
+
+    int getCelkovuVelkostSuboru(){
+        return this->velkostStahovanehoSuboru;
+    }
+
+    pthread_mutex_t* getMutex(){
+        return this->mutex;
+    }
+
+    std::string objString(){
+        return std::to_string(this->id) + "\t " + this->protokol + "\t " + this->stranka + "\t " + this->objektNaStiahnutie + "\t " + std::to_string(this->priorita) + "\t " + this->cas + "\t " + std::to_string(this->state) + "\t " + std::to_string(this->doposialStiahnute) + "/" + std::to_string(this->velkostStahovanehoSuboru) + "\n";
     }
 
 };
@@ -249,6 +267,70 @@ std::string* splitstr(std::string str, std::string deli = " ")
     return polePrikazov;
 }
 
+std::string statusConvert(int cislo){
+    switch(cislo) {//TO DO vo vypise nech sa nastavi
+        case 0:
+            return "default nestahuje sa";
+            break;
+        case 1:
+            return "stahuje sa";
+            break;
+        case 2:
+            return "pauznute";
+            break;
+        case 3:
+            return "ukoncene";
+            break;
+        case 4:
+            return "dostahovane";
+            break;
+        default:
+            return "Error default switch statusConvert";
+    }
+}
+
+void status(std::vector<VlaknoObj*> vectorObjektov, pthread_mutex_t mutex){
+    pthread_mutex_lock(&mutex);
+    std::cout<< "----------------------------------------------\n";
+    for (int i = 0; i < vectorObjektov.size(); ++i) {
+        std::cout << "ID: " << vectorObjektov.at(i)->getID() << "\t ma stiahnutych bytov: " << vectorObjektov.at(i)->getDoposialStiahnute() << "\t z celkovych: " << vectorObjektov.at(i)->getCelkovuVelkostSuboru() << "\t status: " << vectorObjektov.at(i)->getState() << "\n";
+    }
+    std::cout<< "----------------------------------------------\n";
+    pthread_mutex_unlock(&mutex);
+}
+
+void prioCheckerF(std::vector<VlaknoObj*> vectorObjektov, pthread_mutex_t mutex){
+
+        pthread_mutex_lock(&mutex);
+        //zastav vsetky
+    for (int i = 0; i < vectorObjektov.size(); ++i) {
+        if (vectorObjektov.at(i)->getState() == 1){
+            vectorObjektov.at(i)->setState(0);
+        }
+    }
+
+    int maxID = 0;
+    int maxPrio = INT_MAX;
+
+    for (int j = 0; j < 3; ++j) {//3 cisla
+        for (int i = 0; i < vectorObjektov.size(); ++i) {// prejdi celu strukturu
+            if (vectorObjektov.at(i)->getState() == 0 && vectorObjektov.at(i)->getPriorita() < maxPrio) {
+                maxPrio = vectorObjektov.at(i)->getPriorita();
+                maxID = i+1;
+            }
+        }
+        if (maxID != 0) {
+            //std::cout << "maxID=" << maxID << std::endl;
+            vectorObjektov.at(maxID - 1)->setState(1);
+            vectorObjektov.at(maxID - 1)->vytvorVlakno();
+            maxID = 0;
+            maxPrio = INT_MAX;
+        }
+    }
+        pthread_mutex_unlock(&mutex);
+
+}
+
 int main(int argc, char* argv[])
 {
 
@@ -261,27 +343,36 @@ int main(int argc, char* argv[])
 
     while(userInput != "exit") {
         std::cout << "Ocakavam prikaz" << std::endl;
-        getline(std::cin, userInput);// download http pukalik.sk /pos/dog.jpeg priorita cas  // download http pukalik.sk /pos/dog.jpeg 12 21:00 // download http pukalik.sk /pos/pos_big.zip 12 20:00
-        strPtr = splitstr(userInput);
+        getline(std::cin, userInput);// download http pukalik.sk /pos/dog.jpeg priorita cas  // download http pukalik.sk /pos/dog.jpeg 12 17:30 // download http kornhauserbus.sk /images/background.png 12 17:30
+        strPtr = splitstr(userInput);// download http kornhauserbus.sk /images/background.png 12 17:30
         std::cout << "\n";
 
         if (strPtr[0] == "download") {
             counter++;//counter na ID //TO DO co ak pripojenie nedopadne dobre a objekt je stale vytvoreny a counter dal ++
+            pthread_mutex_lock(&mutex);
             vectorObjektov.push_back(new VlaknoObj(counter, strPtr[1], strPtr[2], strPtr[3], stoi(strPtr[4]), strPtr[5], mutex));
+            pthread_mutex_unlock(&mutex);
+
         } else if (strPtr[0] == "state") {
-            for (int i = 0; i < vectorObjektov.size(); ++i) {
-                std::cout << "ID: " << vectorObjektov.at(i)->getID() << " ma stiahnutych bytov: " << vectorObjektov.at(i)->getDoposialStiahnute() << "\n";
-            }
+            status(vectorObjektov, mutex);
         } else if (strPtr[0] == "resume") {// resume ID //resume 1//nastavujem na 0 lebo to znamena ze sa momentalne nestahuje ale akonahle pride dostatocna priorita tak sa zacne stahovat
             vectorObjektov.at(stoi(strPtr[1]) - 1)->setState(0);
         } else if (strPtr[0] == "pause") {// pause ID //pause 1// nastavim na 2 lebo 0 by bola ze checker to moze zacat stahovat a 1 by bolo ze sa to stahuje
             vectorObjektov.at(stoi(strPtr[1]) - 1)->setState(2);
         } else if (strPtr[0] == "cancel") {// cancel ID //cancel 1// 3 akoze nech uz sa s tym nic nerobi a poznaci sa ze to bolo cancellnute
             vectorObjektov.at(stoi(strPtr[1]) - 1)->setState(3);
-        } else if (strPtr[0] == "stahuj") {// stahuj id - toto je len testovacie toto bude robit checker
+        } else if (strPtr[0] == "stahuj") {
+            prioCheckerF(vectorObjektov, mutex);
+        } else if (strPtr[0] == "info") {
+            std::cout << vectorObjektov.at(stoi(strPtr[1]) - 1)->objString() << std::endl;
+        } else if (strPtr[0] == "stiahni") {
             vectorObjektov.at(stoi(strPtr[1]) - 1)->setState(1);
             vectorObjektov.at(stoi(strPtr[1]) - 1)->vytvorVlakno();
         }
+
+
+        //sem nech sa prekontroluju veci ?? TO DO tym padom nepotrebujem signaly
+        prioCheckerF(vectorObjektov, mutex);
 
     }
 
@@ -290,6 +381,17 @@ int main(int argc, char* argv[])
     for (int i = 0; i < vectorObjektov.size(); ++i) {
         pthread_join( vectorObjektov[i]->getVlakno(), NULL);
     }
+
+    std::ofstream myfile;
+    myfile.open ("/home/haladej/history.txt", std::ofstream::app);
+    for (int i = 0; i < vectorObjektov.size(); ++i) {
+
+        myfile << vectorObjektov.at(i)->objString();
+
+    }
+    myfile << "--------------------------------------\n";
+    myfile.close();
+
     pthread_mutex_destroy(&mutex);
     return 0;
 }
