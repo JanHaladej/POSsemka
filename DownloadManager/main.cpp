@@ -343,11 +343,11 @@ std::string statusConvert(int cislo){
 void status(std::vector<VlaknoObj*> vectorObjektov){
     std::cout<< "----------------------------------------------\n";
     for (int i = 0; i < vectorObjektov.size(); ++i) {
-        std::cout << "ID: " << vectorObjektov.at(i)->getID() << "\t ma stiahnutych bytov: " << vectorObjektov.at(i)->getDoposialStiahnute() << "\t z celkovych: " << vectorObjektov.at(i)->getCelkovuVelkostSuboru() << "\t status: " << vectorObjektov.at(i)->getState() << "\n";
+        std::cout << "ID: " << vectorObjektov.at(i)->getID() << "\t \t ma stiahnutych bytov: " << vectorObjektov.at(i)->getDoposialStiahnute() << "\t \t z celkovych: " << vectorObjektov.at(i)->getCelkovuVelkostSuboru() << "\t \t status: " << vectorObjektov.at(i)->getState() << "\n";
     }
     std::cout<< "----------------------------------------------\n";
 }
-
+/*
 void prioCheckerF(std::vector<VlaknoObj*> vectorObjektov, pthread_mutex_t mutex){
         //zastav vsetky
     for (int i = 0; i < vectorObjektov.size(); ++i) {
@@ -376,7 +376,7 @@ void prioCheckerF(std::vector<VlaknoObj*> vectorObjektov, pthread_mutex_t mutex)
     }
 
 }
-
+*/
 typedef struct checkerDataPass {
     bool* checkerVar;
     std::vector<VlaknoObj*>* vectorObjektov;
@@ -386,31 +386,39 @@ typedef struct checkerDataPass {
 void * checkerF(void * arg) {
     //std::vector<VlaknoObj *> *vectorObjektov = static_cast<std::vector<VlaknoObj *> *>(arg);
     CDP* struktura = static_cast<CDP*>(arg);
-    //zastav vsetky
-    for (int i = 0; i < struktura->vectorObjektov->size(); ++i) {
-        if (struktura->vectorObjektov->at(i)->getState() == 1){
-            struktura->vectorObjektov->at(i)->setState(0);
-        }
-    }
-
-    int maxID = 0;
-    int maxPrio = INT_MAX;
-
-    for (int j = 0; j < 3; ++j) {//3 cisla
-        for (int i = 0; i < struktura->vectorObjektov->size(); ++i) {// prejdi celu strukturu
-            if (struktura->vectorObjektov->at(i)->getState() == 0 && struktura->vectorObjektov->at(i)->getPriorita() < maxPrio) {
-                maxPrio = struktura->vectorObjektov->at(i)->getPriorita();
-                maxID = i+1;
+    while(struktura->checkerVar) {
+        sleep(1);
+        pthread_mutex_lock(struktura->mutex);
+        //zastav vsetky
+        for (int i = 0; i < struktura->vectorObjektov->size(); ++i) {
+            if (struktura->vectorObjektov->at(i)->getState() == 1) {
+                struktura->vectorObjektov->at(i)->setState(0);
             }
         }
-        if (maxID != 0) {
-            std::cout << "maxID=" << maxID << std::endl;
-            struktura->vectorObjektov->at(maxID - 1)->setState(1);
-            struktura->vectorObjektov->at(maxID - 1)->vytvorVlakno();
-            maxID = 0;
-            maxPrio = INT_MAX;
+
+        int maxID = 0;
+        int maxPrio = INT_MAX;
+
+        for (int j = 0; j < 3; ++j) {//3 cisla
+            for (int i = 0; i < struktura->vectorObjektov->size(); ++i) {// prejdi celu strukturu
+                if (struktura->vectorObjektov->at(i)->getState() == 0 &&
+                    struktura->vectorObjektov->at(i)->getPriorita() < maxPrio) {
+                    maxPrio = struktura->vectorObjektov->at(i)->getPriorita();
+                    maxID = i + 1;
+                }
+            }
+            if (maxID != 0) {
+                //std::cout << "maxID=" << maxID << std::endl;
+                struktura->vectorObjektov->at(maxID - 1)->setState(1);
+                struktura->vectorObjektov->at(maxID - 1)->vytvorVlakno();
+                maxID = 0;
+                maxPrio = INT_MAX;
+            }
         }
+
+        pthread_mutex_unlock(struktura->mutex);
     }
+    pthread_exit(NULL);
 }
 
 int main(int argc, char* argv[])
@@ -423,14 +431,14 @@ int main(int argc, char* argv[])
     std::vector<VlaknoObj*> vectorObjektov;
     pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
-    bool checkerVar = true;
+    bool checkerVar = true;// na ukoncenie vlakno co ide donekonecna
     CDP checkerData = {&checkerVar, &vectorObjektov, &mutex};
     pthread_t checker;
     pthread_create(&checker, NULL, checkerF, &checkerData);
 
     while(userInput != "exit") {
         std::cout << "Ocakavam prikaz" << std::endl;
-        getline(std::cin, userInput);// download http pukalik.sk /pos/dog.jpeg priorita cas  // download http pukalik.sk /pos/dog.jpeg 12 16:47 // download http kornhauserbus.sk /images/background.png 12 17:30
+        getline(std::cin, userInput);// download http pukalik.sk /pos/dog.jpeg priorita cas  // download http pukalik.sk /pos/dog.jpeg 12 18:41 // download http kornhauserbus.sk /images/background.png 12 17:30
         strPtr = splitstr(userInput);// download http kornhauserbus.sk /images/background.png 12 17:30 // download https speed.hetzner.de /100MB.bin 12 00:15
         std::cout << "\n";
 
@@ -455,10 +463,6 @@ int main(int argc, char* argv[])
             pthread_mutex_lock(&mutex);
             vectorObjektov.at(stoi(strPtr[1]) - 1)->setState(3);
             pthread_mutex_unlock(&mutex);
-        } else if (strPtr[0] == "stahuj") {
-            pthread_mutex_lock(&mutex);
-            prioCheckerF(vectorObjektov, mutex);
-            pthread_mutex_unlock(&mutex);
         } else if (strPtr[0] == "info") {
             std::cout << vectorObjektov.at(stoi(strPtr[1]) - 1)->objString() << std::endl;
         } else if (strPtr[0] == "stiahni") {// 2 krat to vytvori vlakno elbo v stiahni vytvaram vlakno
@@ -468,13 +472,10 @@ int main(int argc, char* argv[])
 
 
         //sem nech sa prekontroluju veci ?? TO DO tym padom nepotrebujem signaly
-        pthread_mutex_lock(&mutex);
-        prioCheckerF(vectorObjektov, mutex);
-        pthread_mutex_unlock(&mutex);
         free(strPtr);//lebo opakovane davam novy string a nemozem stratit ten p[redtym inak sa ku nemu uz nedostanem preto sem free
     }
 
-
+    checkerVar = false;
 
     for (int i = 0; i < vectorObjektov.size(); ++i) {
         pthread_join( vectorObjektov[i]->getVlakno(), NULL);
