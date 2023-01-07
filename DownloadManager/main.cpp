@@ -21,6 +21,28 @@ enum { max_length = 1024 };
 namespace ssl = boost::asio::ssl;
 typedef ssl::stream<tcp::socket> ssl_socket;
 
+std::string statusConvert(int cislo){
+    switch(cislo) {
+        case 0:
+            return "nestahuje sa";
+            break;
+        case 1:
+            return "stahuje sa";
+            break;
+        case 2:
+            return "pauznute";
+            break;
+        case 3:
+            return "cancelnute";
+            break;
+        case 4:
+            return "dostahovane";
+            break;
+        default:
+            return "Error default switch statusConvert";
+    }
+}
+
 class VlaknoObj {
 private:
     int id;
@@ -49,7 +71,7 @@ public:
 
         doposialStiahnute = 0;
         velkostStahovanehoSuboru = 0;
-        state = 0;//0 default nestahuje sa //1 stahuje sa //2 pauznute //3 ukoncene - cancel //4 dostahovane
+        state = 0;//0 default nestahuje sa //1 stahuje sa //2 pauznute //3 cancel //4 dostahovane
 
         //vytvorVlakno();// iba na skusku TO DO potom budem mat ten checkerF aby zapinalo vlakna
     }
@@ -57,8 +79,6 @@ public:
     int httpProtocol(){
         try
         {
-            std::cout << this->id << " zacinam stahovat " << this->doposialStiahnute << std::endl;
-
             boost::asio::io_context io_context; // zakladne I/O funkcionality OS - posielanie streamov
 
             // Get a list of endpoints corresponding to the server name.
@@ -162,7 +182,6 @@ public:
             */
             myfile.close();
 
-            std::cout << this->id << " stiahlo doteraz " << this->doposialStiahnute << std::endl;
         }
         catch (std::exception& e)
         {
@@ -172,30 +191,20 @@ public:
         return 0;
     }
 
-    bool presielCas(int hodiny, int minuty){//mozem sa pytat ci uz presiel cas a teda sa moze stahovat
+    bool presielCas(){//mozem sa pytat ci uz presiel cas a teda sa moze stahovat
 
         time_t givemetime = time(NULL);
         std::string now = ctime(&givemetime);
         int nowHH = stoi(now.substr(11,2));
         int nowMM = stoi(now.substr(14,2));
 
-        if (nowHH == hodiny && nowMM >= minuty || nowHH > hodiny){
+        if (nowHH == stoi(cas.substr(0, 2)) && nowMM >= stoi(cas.substr(3, 2)) || nowHH > stoi(cas.substr(0, 2))){
             return true;
         }
         return false;
     }
 
-    void cakajNaCas(int hodiny, int minuty){
-
-        while(!(presielCas(hodiny, minuty))){
-            sleep(5);
-        }
-
-    }
-
     void * vlaknoF(void * arg) {
-
-        cakajNaCas(stoi(cas.substr(0, 2)), stoi(cas.substr(3, 2)));
 
         if (this->protokol == "http") {
             httpProtocol();
@@ -290,12 +299,8 @@ public:
         return this->velkostStahovanehoSuboru;
     }
 
-    pthread_mutex_t* getMutex(){
-        return this->mutex;
-    }
-
     std::string objString(){
-        return std::to_string(this->id) + "\t " + this->protokol + "\t " + this->stranka + "\t " + this->objektNaStiahnutie + "\t " + std::to_string(this->priorita) + "\t " + this->cas + "\t " + std::to_string(this->state) + "\t " + std::to_string(this->doposialStiahnute) + "/" + std::to_string(this->velkostStahovanehoSuboru) + "\n";
+        return std::to_string(this->id) + "\t " + this->protokol + "\t " + this->stranka + "\t " + this->objektNaStiahnutie + "\t " + std::to_string(this->priorita) + "\t " + this->cas + "\t " + statusConvert(this->state) + "\t " + std::to_string(this->doposialStiahnute) + "/" + std::to_string(this->velkostStahovanehoSuboru) + "\n";
     }
 
 };
@@ -318,65 +323,14 @@ std::string* splitstr(std::string str, std::string deli = " ")
     return polePrikazov;
 }
 
-std::string statusConvert(int cislo){
-    switch(cislo) {//TO DO vo vypise nech sa nastavi
-        case 0:
-            return "default nestahuje sa";
-            break;
-        case 1:
-            return "stahuje sa";
-            break;
-        case 2:
-            return "pauznute";
-            break;
-        case 3:
-            return "ukoncene";
-            break;
-        case 4:
-            return "dostahovane";
-            break;
-        default:
-            return "Error default switch statusConvert";
-    }
-}
-
 void status(std::vector<VlaknoObj*> vectorObjektov){
     std::cout<< "----------------------------------------------\n";
     for (int i = 0; i < vectorObjektov.size(); ++i) {
-        std::cout << "ID: " << vectorObjektov.at(i)->getID() << "\t \t ma stiahnutych bytov: " << vectorObjektov.at(i)->getDoposialStiahnute() << "\t \t z celkovych: " << vectorObjektov.at(i)->getCelkovuVelkostSuboru() << "\t \t status: " << vectorObjektov.at(i)->getState() << "\n";
+        std::cout << "ID: " << vectorObjektov.at(i)->getID() << "\t \t ma stiahnutych bytov: " << vectorObjektov.at(i)->getDoposialStiahnute() << "\t \t z celkovych: " << vectorObjektov.at(i)->getCelkovuVelkostSuboru() << "\t \t status: " << statusConvert(vectorObjektov.at(i)->getState()) << "\n";
     }
     std::cout<< "----------------------------------------------\n";
 }
-/*
-void prioCheckerF(std::vector<VlaknoObj*> vectorObjektov, pthread_mutex_t mutex){
-        //zastav vsetky
-    for (int i = 0; i < vectorObjektov.size(); ++i) {
-        if (vectorObjektov.at(i)->getState() == 1){
-            vectorObjektov.at(i)->setState(0);
-        }
-    }
 
-    int maxID = 0;
-    int maxPrio = INT_MAX;
-
-    for (int j = 0; j < 3; ++j) {//3 cisla
-        for (int i = 0; i < vectorObjektov.size(); ++i) {// prejdi celu strukturu
-            if (vectorObjektov.at(i)->getState() == 0 && vectorObjektov.at(i)->getPriorita() < maxPrio) {
-                maxPrio = vectorObjektov.at(i)->getPriorita();
-                maxID = i+1;
-            }
-        }
-        if (maxID != 0) {
-            std::cout << "maxID=" << maxID << std::endl;
-            vectorObjektov.at(maxID - 1)->setState(1);
-            vectorObjektov.at(maxID - 1)->vytvorVlakno();
-            maxID = 0;
-            maxPrio = INT_MAX;
-        }
-    }
-
-}
-*/
 typedef struct checkerDataPass {
     bool* checkerVar;
     std::vector<VlaknoObj*>* vectorObjektov;
@@ -386,9 +340,10 @@ typedef struct checkerDataPass {
 void * checkerF(void * arg) {
     //std::vector<VlaknoObj *> *vectorObjektov = static_cast<std::vector<VlaknoObj *> *>(arg);
     CDP* struktura = static_cast<CDP*>(arg);
-    while(struktura->checkerVar) {
+    while(*struktura->checkerVar) {
         sleep(1);
         pthread_mutex_lock(struktura->mutex);
+
         //zastav vsetky
         for (int i = 0; i < struktura->vectorObjektov->size(); ++i) {
             if (struktura->vectorObjektov->at(i)->getState() == 1) {
@@ -402,13 +357,13 @@ void * checkerF(void * arg) {
         for (int j = 0; j < 3; ++j) {//3 cisla
             for (int i = 0; i < struktura->vectorObjektov->size(); ++i) {// prejdi celu strukturu
                 if (struktura->vectorObjektov->at(i)->getState() == 0 &&
-                    struktura->vectorObjektov->at(i)->getPriorita() < maxPrio) {
+                    struktura->vectorObjektov->at(i)->getPriorita() < maxPrio
+                    && struktura->vectorObjektov->at(i)->presielCas()) {
                     maxPrio = struktura->vectorObjektov->at(i)->getPriorita();
                     maxID = i + 1;
                 }
             }
             if (maxID != 0) {
-                //std::cout << "maxID=" << maxID << std::endl;
                 struktura->vectorObjektov->at(maxID - 1)->setState(1);
                 struktura->vectorObjektov->at(maxID - 1)->vytvorVlakno();
                 maxID = 0;
@@ -419,6 +374,28 @@ void * checkerF(void * arg) {
         pthread_mutex_unlock(struktura->mutex);
     }
     pthread_exit(NULL);
+}
+
+bool zistiCiSaStahuje(std::vector<VlaknoObj*>* vectorObjektov, pthread_mutex_t* mutex){
+    pthread_mutex_lock(mutex);
+    for (int i = 0; i < vectorObjektov->size(); ++i) {
+        if (vectorObjektov->at(i)->getState() <= 2 ){// 0 1 2 ready,stahuje sa, pauza
+            pthread_mutex_unlock(mutex);
+            return true;
+        }
+    }
+    pthread_mutex_unlock(mutex);
+    return false;
+}
+
+void zrusVsetkyStahujuceSa(std::vector<VlaknoObj*>* vectorObjektov, pthread_mutex_t* mutex){
+    pthread_mutex_lock(mutex);
+    for (int i = 0; i < vectorObjektov->size(); ++i) {
+        if (vectorObjektov->at(i)->getState() <= 2 ){// 0 1 2 ready,stahuje sa, pauza
+            vectorObjektov->at(i)->setState(3);
+        }
+    }
+    pthread_mutex_unlock(mutex);
 }
 
 int main(int argc, char* argv[])
@@ -438,9 +415,9 @@ int main(int argc, char* argv[])
 
     while(userInput != "exit") {
         std::cout << "Ocakavam prikaz" << std::endl;
-        getline(std::cin, userInput);// download http pukalik.sk /pos/dog.jpeg priorita cas  // download http pukalik.sk /pos/dog.jpeg 12 18:41 // download http kornhauserbus.sk /images/background.png 12 17:30
-        strPtr = splitstr(userInput);// download http kornhauserbus.sk /images/background.png 12 17:30 // download https speed.hetzner.de /100MB.bin 12 00:15
-        std::cout << "\n";
+        getline(std::cin, userInput);// download http pukalik.sk /pos/dog.jpeg priorita cas  // download http pukalik.sk /pos/dog.jpeg 12 20:16 // download http kornhauserbus.sk /images/background.png 12 17:30
+        strPtr = splitstr(userInput);// download http kornhauserbus.sk /images/background.png 12 17:30 // download https speed.hetzner.de /100MB.bin 12 22:00
+        std::cout << "\n";//state exit
 
         if (strPtr[0] == "download") {
             counter++;//counter na ID //TO DO co ak pripojenie nedopadne dobre a objekt je stale vytvoreny a counter dal ++
@@ -463,19 +440,25 @@ int main(int argc, char* argv[])
             pthread_mutex_lock(&mutex);
             vectorObjektov.at(stoi(strPtr[1]) - 1)->setState(3);
             pthread_mutex_unlock(&mutex);
-        } else if (strPtr[0] == "info") {
-            std::cout << vectorObjektov.at(stoi(strPtr[1]) - 1)->objString() << std::endl;
-        } else if (strPtr[0] == "stiahni") {// 2 krat to vytvori vlakno elbo v stiahni vytvaram vlakno
-            vectorObjektov.at(stoi(strPtr[1]) - 1)->setState(1);
-            vectorObjektov.at(stoi(strPtr[1]) - 1)->vytvorVlakno();
+        } else if (strPtr[0] == "exit") {
+            if (zistiCiSaStahuje(&vectorObjektov, &mutex)){
+                std::cout << "Stale existuju subory, ktore sa stahuju. Chcete ukoncit program? [y/n]" << std::endl;
+                getline(std::cin, userInput);
+                std::cout << "\n";
+                if (userInput == "y"){
+                    zrusVsetkyStahujuceSa(&vectorObjektov, &mutex);
+                    userInput = "exit";
+                }
+
+            }
         }
 
-
-        //sem nech sa prekontroluju veci ?? TO DO tym padom nepotrebujem signaly
-        free(strPtr);//lebo opakovane davam novy string a nemozem stratit ten p[redtym inak sa ku nemu uz nedostanem preto sem free
+        delete[] strPtr;//lebo opakovane davam novy string a nemozem stratit ten predtym inak sa ku nemu uz nedostanem preto sem free // zaujmava poznamka -> ked davam new tak takto delete a nie delete(foo);
     }
 
     checkerVar = false;
+
+    pthread_join(checker, NULL);
 
     for (int i = 0; i < vectorObjektov.size(); ++i) {
         pthread_join( vectorObjektov[i]->getVlakno(), NULL);
@@ -492,9 +475,10 @@ int main(int argc, char* argv[])
     myfile.close();
 
     for (int i = 0; i < vectorObjektov.size(); ++i) {
-        free(vectorObjektov.at(i));
+        delete(vectorObjektov.at(i));
     }
 
     pthread_mutex_destroy(&mutex);
+
     return 0;
 }
