@@ -5,4 +5,6 @@ set(CMAKE_CXX_STANDARD 20)
 
 add_executable(DownloadManager main.cpp)
 
-target_link_libraries(DownloadManager pthread)
+target_link_libraries(DownloadManager pthread ssl crypto)#SSL a CRYPTO kvoli ssl
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=leak ")

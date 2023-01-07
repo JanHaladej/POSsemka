@@ -3,6 +3,9 @@
 #include <ostream>
 #include <string>
 #include <boost/asio.hpp>
+#include <boost/bind/bind.hpp>
+#include <boost/asio/ssl.hpp>
+#include <boost/lexical_cast.hpp>
 #include <fstream>
 #include <stdio.h>
 #include <pthread.h>
@@ -12,9 +15,11 @@
 #include <vector>
 
 typedef void * (*THREADFUNCPTR)(void *);
-
-
 using boost::asio::ip::tcp;
+
+enum { max_length = 1024 };
+namespace ssl = boost::asio::ssl;
+typedef ssl::stream<tcp::socket> ssl_socket;
 
 class VlaknoObj {
 private:
@@ -30,6 +35,7 @@ private:
     int velkostStahovanehoSuboru;
     int state;
     pthread_t vlakno;
+    bool existujeVlakno = false;
 
 public:
     VlaknoObj(int id, std::string protokol, std::string stranka, std::string objektNaStiahnutie, int priorita, std::string cas, pthread_mutex_t mutex){
@@ -150,34 +156,39 @@ public:
                 myfile << &response;
                 //std::cout << this->id << "   " << this->doposialStiahnute << std::endl;
             }
-
+            /*
             if (error != boost::asio::error::eof){
-                throw boost::system::system_error(error);}
-
+                throw boost::system::system_error(error);}//success ked prejde ale ukoncim skor cez state
+            */
             myfile.close();
 
             std::cout << this->id << " stiahlo doteraz " << this->doposialStiahnute << std::endl;
         }
         catch (std::exception& e)
         {
-            std::cout << "Exception: " << e.what() << "\n";
+            std::cout << "Exception: " << e.what() << "\n";//success ked prejde ale ukoncim skor cez state
         }
 
         return 0;
     }
 
-    void cakajNaCas(int hodiny, int minuty){
+    bool presielCas(int hodiny, int minuty){//mozem sa pytat ci uz presiel cas a teda sa moze stahovat
+
         time_t givemetime = time(NULL);
         std::string now = ctime(&givemetime);
         int nowHH = stoi(now.substr(11,2));
         int nowMM = stoi(now.substr(14,2));
 
-        while(!(nowHH == hodiny && nowMM >= minuty || nowHH > hodiny)){
+        if (nowHH == hodiny && nowMM >= minuty || nowHH > hodiny){
+            return true;
+        }
+        return false;
+    }
+
+    void cakajNaCas(int hodiny, int minuty){
+
+        while(!(presielCas(hodiny, minuty))){
             sleep(5);
-            givemetime = time(NULL);
-            std::string now = ctime(&givemetime);
-            nowHH = stoi(now.substr(11,2));
-            nowMM = stoi(now.substr(14,2));
         }
 
     }
@@ -196,17 +207,57 @@ public:
             //std::cout << this->id << "   " << this->doposialStiahnute << std::endl;
         } else if (this->protokol == "https") {
 
+            //cele SSL
+            // Create a context that uses the default paths for
+            // finding CA certificates.
+            ssl::context ctx(ssl::context::tls);//podmienka tiez na tls
+            ctx.set_default_verify_paths();
+
+            // Open a socket and connect it to the remote host.
+            boost::asio::io_context io_context;
+            ssl_socket sock(io_context, ctx);
+            tcp::resolver resolver(io_context);
+            tcp::resolver::query query(stranka, "https");
+            boost::asio::connect(sock.lowest_layer(), resolver.resolve(query));
+            sock.lowest_layer().set_option(tcp::no_delay(true));
+
+            // Perform SSL handshake and verify the remote host's
+            // certificate.
+            sock.set_verify_mode(ssl::verify_peer);
+            sock.set_verify_callback(ssl::rfc2818_verification(stranka));
+
+            //doplny hostname pri hanshake SSL_set_tlsext_host_name(sock.native_handle(),host.c_str())
+            if(!SSL_set_tlsext_host_name(sock.native_handle(),stranka.c_str())){
+                std::cout << "random \n";//TO DO co to je toto
+                throw boost::system::system_error(::ERR_get_error(),boost::asio::error::get_ssl_category());
+            }
+            sock.handshake(ssl_socket::client);
+
+            httpProtocol();
+
+            if (this->doposialStiahnute >= this->velkostStahovanehoSuboru){
+                //pthread_mutex_lock(this->mutex);
+                state = 4;
+                //pthread_mutex_unlock(this->mutex);
+            }
+
         } else if (this->protokol == "ftp") {
 
         } else if (this->protokol == "ftps") {
 
         }
 
+        this->existujeVlakno = false;
         pthread_exit(NULL);
     }
 
     void vytvorVlakno() {
-        pthread_create(&vlakno, NULL, (THREADFUNCPTR) &VlaknoObj::vlaknoF, this);
+
+        if (!(this->existujeVlakno)) {
+            this->existujeVlakno = true;
+            pthread_create(&vlakno, NULL, (THREADFUNCPTR) &VlaknoObj::vlaknoF, this);
+        }
+
     }
 
     int getPriorita(){
@@ -289,19 +340,15 @@ std::string statusConvert(int cislo){
     }
 }
 
-void status(std::vector<VlaknoObj*> vectorObjektov, pthread_mutex_t mutex){
-    pthread_mutex_lock(&mutex);
+void status(std::vector<VlaknoObj*> vectorObjektov){
     std::cout<< "----------------------------------------------\n";
     for (int i = 0; i < vectorObjektov.size(); ++i) {
         std::cout << "ID: " << vectorObjektov.at(i)->getID() << "\t ma stiahnutych bytov: " << vectorObjektov.at(i)->getDoposialStiahnute() << "\t z celkovych: " << vectorObjektov.at(i)->getCelkovuVelkostSuboru() << "\t status: " << vectorObjektov.at(i)->getState() << "\n";
     }
     std::cout<< "----------------------------------------------\n";
-    pthread_mutex_unlock(&mutex);
 }
 
 void prioCheckerF(std::vector<VlaknoObj*> vectorObjektov, pthread_mutex_t mutex){
-
-        pthread_mutex_lock(&mutex);
         //zastav vsetky
     for (int i = 0; i < vectorObjektov.size(); ++i) {
         if (vectorObjektov.at(i)->getState() == 1){
@@ -320,15 +367,50 @@ void prioCheckerF(std::vector<VlaknoObj*> vectorObjektov, pthread_mutex_t mutex)
             }
         }
         if (maxID != 0) {
-            //std::cout << "maxID=" << maxID << std::endl;
+            std::cout << "maxID=" << maxID << std::endl;
             vectorObjektov.at(maxID - 1)->setState(1);
             vectorObjektov.at(maxID - 1)->vytvorVlakno();
             maxID = 0;
             maxPrio = INT_MAX;
         }
     }
-        pthread_mutex_unlock(&mutex);
 
+}
+
+typedef struct checkerDataPass {
+    bool* checkerVar;
+    std::vector<VlaknoObj*>* vectorObjektov;
+    pthread_mutex_t* mutex;
+}CDP;
+
+void * checkerF(void * arg) {
+    //std::vector<VlaknoObj *> *vectorObjektov = static_cast<std::vector<VlaknoObj *> *>(arg);
+    CDP* struktura = static_cast<CDP*>(arg);
+    //zastav vsetky
+    for (int i = 0; i < struktura->vectorObjektov->size(); ++i) {
+        if (struktura->vectorObjektov->at(i)->getState() == 1){
+            struktura->vectorObjektov->at(i)->setState(0);
+        }
+    }
+
+    int maxID = 0;
+    int maxPrio = INT_MAX;
+
+    for (int j = 0; j < 3; ++j) {//3 cisla
+        for (int i = 0; i < struktura->vectorObjektov->size(); ++i) {// prejdi celu strukturu
+            if (struktura->vectorObjektov->at(i)->getState() == 0 && struktura->vectorObjektov->at(i)->getPriorita() < maxPrio) {
+                maxPrio = struktura->vectorObjektov->at(i)->getPriorita();
+                maxID = i+1;
+            }
+        }
+        if (maxID != 0) {
+            std::cout << "maxID=" << maxID << std::endl;
+            struktura->vectorObjektov->at(maxID - 1)->setState(1);
+            struktura->vectorObjektov->at(maxID - 1)->vytvorVlakno();
+            maxID = 0;
+            maxPrio = INT_MAX;
+        }
+    }
 }
 
 int main(int argc, char* argv[])
@@ -341,10 +423,15 @@ int main(int argc, char* argv[])
     std::vector<VlaknoObj*> vectorObjektov;
     pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
+    bool checkerVar = true;
+    CDP checkerData = {&checkerVar, &vectorObjektov, &mutex};
+    pthread_t checker;
+    pthread_create(&checker, NULL, checkerF, &checkerData);
+
     while(userInput != "exit") {
         std::cout << "Ocakavam prikaz" << std::endl;
-        getline(std::cin, userInput);// download http pukalik.sk /pos/dog.jpeg priorita cas  // download http pukalik.sk /pos/dog.jpeg 12 17:30 // download http kornhauserbus.sk /images/background.png 12 17:30
-        strPtr = splitstr(userInput);// download http kornhauserbus.sk /images/background.png 12 17:30
+        getline(std::cin, userInput);// download http pukalik.sk /pos/dog.jpeg priorita cas  // download http pukalik.sk /pos/dog.jpeg 12 16:47 // download http kornhauserbus.sk /images/background.png 12 17:30
+        strPtr = splitstr(userInput);// download http kornhauserbus.sk /images/background.png 12 17:30 // download https speed.hetzner.de /100MB.bin 12 00:15
         std::cout << "\n";
 
         if (strPtr[0] == "download") {
@@ -352,28 +439,39 @@ int main(int argc, char* argv[])
             pthread_mutex_lock(&mutex);
             vectorObjektov.push_back(new VlaknoObj(counter, strPtr[1], strPtr[2], strPtr[3], stoi(strPtr[4]), strPtr[5], mutex));
             pthread_mutex_unlock(&mutex);
-
         } else if (strPtr[0] == "state") {
-            status(vectorObjektov, mutex);
+            pthread_mutex_lock(&mutex);
+            status(vectorObjektov);
+            pthread_mutex_unlock(&mutex);
         } else if (strPtr[0] == "resume") {// resume ID //resume 1//nastavujem na 0 lebo to znamena ze sa momentalne nestahuje ale akonahle pride dostatocna priorita tak sa zacne stahovat
+            pthread_mutex_lock(&mutex);
             vectorObjektov.at(stoi(strPtr[1]) - 1)->setState(0);
+            pthread_mutex_unlock(&mutex);
         } else if (strPtr[0] == "pause") {// pause ID //pause 1// nastavim na 2 lebo 0 by bola ze checker to moze zacat stahovat a 1 by bolo ze sa to stahuje
+            pthread_mutex_lock(&mutex);
             vectorObjektov.at(stoi(strPtr[1]) - 1)->setState(2);
+            pthread_mutex_unlock(&mutex);
         } else if (strPtr[0] == "cancel") {// cancel ID //cancel 1// 3 akoze nech uz sa s tym nic nerobi a poznaci sa ze to bolo cancellnute
+            pthread_mutex_lock(&mutex);
             vectorObjektov.at(stoi(strPtr[1]) - 1)->setState(3);
+            pthread_mutex_unlock(&mutex);
         } else if (strPtr[0] == "stahuj") {
+            pthread_mutex_lock(&mutex);
             prioCheckerF(vectorObjektov, mutex);
+            pthread_mutex_unlock(&mutex);
         } else if (strPtr[0] == "info") {
             std::cout << vectorObjektov.at(stoi(strPtr[1]) - 1)->objString() << std::endl;
-        } else if (strPtr[0] == "stiahni") {
+        } else if (strPtr[0] == "stiahni") {// 2 krat to vytvori vlakno elbo v stiahni vytvaram vlakno
             vectorObjektov.at(stoi(strPtr[1]) - 1)->setState(1);
             vectorObjektov.at(stoi(strPtr[1]) - 1)->vytvorVlakno();
         }
 
 
         //sem nech sa prekontroluju veci ?? TO DO tym padom nepotrebujem signaly
+        pthread_mutex_lock(&mutex);
         prioCheckerF(vectorObjektov, mutex);
-
+        pthread_mutex_unlock(&mutex);
+        free(strPtr);//lebo opakovane davam novy string a nemozem stratit ten p[redtym inak sa ku nemu uz nedostanem preto sem free
     }
 
 
@@ -391,6 +489,10 @@ int main(int argc, char* argv[])
     }
     myfile << "--------------------------------------\n";
     myfile.close();
+
+    for (int i = 0; i < vectorObjektov.size(); ++i) {
+        free(vectorObjektov.at(i));
+    }
 
     pthread_mutex_destroy(&mutex);
     return 0;

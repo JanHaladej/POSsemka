@@ -1,1 +1,1 @@
-/usr/bin/c++ -g CMakeFiles/DownloadManager.dir/main.cpp.o -o DownloadManager  -lpthread 
+/usr/bin/c++  -fsanitize=leak  -g CMakeFiles/DownloadManager.dir/main.cpp.o -o DownloadManager  -lpthread -lssl -lcrypto 
