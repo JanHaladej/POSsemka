@@ -51,7 +51,8 @@ private:
     std::string cas;
     int priorita;
     std::string protokol;
-    pthread_mutex_t * mutex;
+
+    std::string menoSuboru;
 
     int doposialStiahnute;
     int velkostStahovanehoSuboru;
@@ -60,14 +61,14 @@ private:
     bool existujeVlakno = false;
 
 public:
-    VlaknoObj(int id, std::string protokol, std::string stranka, std::string objektNaStiahnutie, int priorita, std::string cas, pthread_mutex_t mutex){
+    VlaknoObj(int id, std::string protokol, std::string stranka, std::string objektNaStiahnutie, int priorita, std::string cas, std::string menoSuboru){
         this->id = id;
         this->stranka = stranka;
         this->objektNaStiahnutie = objektNaStiahnutie;
         this->cas = cas;
         this->priorita = priorita;
         this->protokol = protokol;
-        this->mutex = &mutex;
+        this->menoSuboru = menoSuboru;
 
         doposialStiahnute = 0;
         velkostStahovanehoSuboru = 0;
@@ -159,7 +160,7 @@ public:
             if (response.size() > 0){
                 //zapis textu do txt suboru
                 //std::ofstream myfile;
-                myfile.open ("/home/haladej/image" + std::to_string(id) + ".jpeg", std::ofstream::app);// TO DO aby nebola koncovka jpeg ale to co ma byt - funkcia ktora parsne z nazvu suboru vsetko za bodkou napr
+                myfile.open ("/home/haladej/" + this->menoSuboru, std::ofstream::app);
                 this->doposialStiahnute += response.size();
                 myfile << &response << std::endl;
                 //myfile.close();
@@ -299,19 +300,23 @@ public:
         return this->velkostStahovanehoSuboru;
     }
 
+    std::string getMenoSuboru(){
+        return this->menoSuboru;
+    }
+
     std::string objString(){
-        return std::to_string(this->id) + "\t " + this->protokol + "\t " + this->stranka + "\t " + this->objektNaStiahnutie + "\t " + std::to_string(this->priorita) + "\t " + this->cas + "\t " + statusConvert(this->state) + "\t " + std::to_string(this->doposialStiahnute) + "/" + std::to_string(this->velkostStahovanehoSuboru) + "\n";
+        return std::to_string(this->id) + "\t " + this->protokol + "\t " + this->stranka + "\t " + this->objektNaStiahnutie + "\t " + std::to_string(this->priorita) + "\t " + this->cas + "\t " + statusConvert(this->state) + "\t " + std::to_string(this->doposialStiahnute) + "/" + std::to_string(this->velkostStahovanehoSuboru) + "/" + this->menoSuboru + "\n";
     }
 
 };
 
 std::string* splitstr(std::string str, std::string deli = " ")
 {
-    std::string* polePrikazov = new std::string[6]; // ci treba dat delete ked je to vo funkcii lebo unmap mi pise ze to nevie najst ked dam delete
+    std::string* polePrikazov = new std::string[7]; // ci treba dat delete ked je to vo funkcii lebo unmap mi pise ze to nevie najst ked dam delete
     int count = 0;
     int start = 0;
     int end = str.find(deli);
-    while (end != -1 && polePrikazov[4].empty() == 1) {
+    while (end != -1 && polePrikazov[5].empty() == 1) {
         polePrikazov[count] = str.substr(start, end - start);
         count++;
         start = end + deli.size();
@@ -326,7 +331,7 @@ std::string* splitstr(std::string str, std::string deli = " ")
 void status(std::vector<VlaknoObj*> vectorObjektov){
     std::cout<< "----------------------------------------------\n";
     for (int i = 0; i < vectorObjektov.size(); ++i) {
-        std::cout << "ID: " << vectorObjektov.at(i)->getID() << "\t \t ma stiahnutych bytov: " << vectorObjektov.at(i)->getDoposialStiahnute() << "\t \t z celkovych: " << vectorObjektov.at(i)->getCelkovuVelkostSuboru() << "\t \t status: " << statusConvert(vectorObjektov.at(i)->getState()) << "\n";
+        std::cout << "ID: " << vectorObjektov.at(i)->getID() << "\t \t " + vectorObjektov.at(i)->getMenoSuboru() << "\t \t ma stiahnutych bytov: " << vectorObjektov.at(i)->getDoposialStiahnute() << "\t \t z celkovych: " << vectorObjektov.at(i)->getCelkovuVelkostSuboru() << "\t \t status: " << statusConvert(vectorObjektov.at(i)->getState()) << "\n";
     }
     std::cout<< "----------------------------------------------\n";
 }
@@ -415,14 +420,14 @@ int main(int argc, char* argv[])
 
     while(userInput != "exit") {
         std::cout << "Ocakavam prikaz" << std::endl;
-        getline(std::cin, userInput);// download http pukalik.sk /pos/dog.jpeg priorita cas  // download http pukalik.sk /pos/dog.jpeg 12 20:16 // download http kornhauserbus.sk /images/background.png 12 17:30
-        strPtr = splitstr(userInput);// download http kornhauserbus.sk /images/background.png 12 17:30 // download https speed.hetzner.de /100MB.bin 12 22:00
+        getline(std::cin, userInput);// download http pukalik.sk /pos/dog.jpeg priorita cas menoSuboru // download http pukalik.sk /pos/dog.jpeg 12 20:16 dog.jpeg // download http kornhauserbus.sk /images/background.png 12 17:30 background.png
+        strPtr = splitstr(userInput);// download https speed.hetzner.de /100MB.bin 12 22:00 100MB.bin
         std::cout << "\n";//state exit
 
         if (strPtr[0] == "download") {
             counter++;//counter na ID //TO DO co ak pripojenie nedopadne dobre a objekt je stale vytvoreny a counter dal ++
             pthread_mutex_lock(&mutex);
-            vectorObjektov.push_back(new VlaknoObj(counter, strPtr[1], strPtr[2], strPtr[3], stoi(strPtr[4]), strPtr[5], mutex));
+            vectorObjektov.push_back(new VlaknoObj(counter, strPtr[1], strPtr[2], strPtr[3], stoi(strPtr[4]), strPtr[5], strPtr[6]));
             pthread_mutex_unlock(&mutex);
         } else if (strPtr[0] == "state") {
             pthread_mutex_lock(&mutex);
