@@ -218,10 +218,10 @@ public:
             //std::cout << this->id << "   " << this->doposialStiahnute << std::endl;
         } else if (this->protokol == "https") {
 
-            //cele SSL
+            // cele SSL
             // Create a context that uses the default paths for
-            // finding CA certificates.
-            ssl::context ctx(ssl::context::tls);//podmienka tiez na tls
+            // finding CA certificates. + tls
+            ssl::context ctx(ssl::context::tls);
             ctx.set_default_verify_paths();
 
             // Open a socket and connect it to the remote host.
@@ -237,14 +237,13 @@ public:
             sock.set_verify_mode(ssl::verify_peer);
             sock.set_verify_callback(ssl::rfc2818_verification(stranka));
 
-            //doplny hostname pri hanshake SSL_set_tlsext_host_name(sock.native_handle(),host.c_str())
-            if(!SSL_set_tlsext_host_name(sock.native_handle(),stranka.c_str())){
-                std::cout << "random \n";//TO DO co to je toto
-                throw boost::system::system_error(::ERR_get_error(),boost::asio::error::get_ssl_category());
+            //doplni hostname pri hanshake
+            if(!SSL_set_tlsext_host_name(sock.native_handle(),stranka.c_str())){//c_str lebo chce c string
+                throw boost::system::system_error(::ERR_get_error(),boost::asio::error::get_ssl_category());// ak ho neda tak throw
             }
             sock.handshake(ssl_socket::client);
 
-            httpProtocol();
+            httpProtocol();// po handshake uz ide klasicky http protokol
 
             if (this->doposialStiahnute >= this->velkostStahovanehoSuboru){
                 //pthread_mutex_lock(this->mutex);
@@ -306,7 +305,7 @@ public:
     }
 
     std::string objString(){
-        return std::to_string(this->id) + "\t " + this->protokol + "\t " + this->stranka + "\t " + this->objektNaStiahnutie + "\t " + std::to_string(this->priorita) + "\t " + this->cas + "\t " + statusConvert(this->state) + "\t " + std::to_string(this->doposialStiahnute) + "/" + std::to_string(this->velkostStahovanehoSuboru) + "/" + this->menoSuboru + "\n";
+        return std::to_string(this->id) + "\t " + this->protokol + "\t " + this->stranka + "\t " + this->objektNaStiahnutie + "\t " + std::to_string(this->priorita) + "\t " + this->cas + "\t " + statusConvert(this->state) + "\t " + std::to_string(this->doposialStiahnute) + "/" + std::to_string(this->velkostStahovanehoSuboru) + "\t " + this->menoSuboru + "\n";
     }
 
 };
@@ -426,7 +425,7 @@ int main(int argc, char* argv[])
         std::cout << "\n";//state exit
 
         if (strPtr[0] == "download") {
-            counter++;//counter na ID //TO DO co ak pripojenie nedopadne dobre a objekt je stale vytvoreny a counter dal ++
+            counter++;//counter na ID
             pthread_mutex_lock(&mutex);
             vectorObjektov.push_back(new VlaknoObj(counter, strPtr[1], strPtr[2], strPtr[3], stoi(strPtr[4]), strPtr[5], strPtr[6]));
             pthread_mutex_unlock(&mutex);
