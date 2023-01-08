@@ -13,6 +13,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <vector>
+#include <cstdlib>
 
 typedef void * (*THREADFUNCPTR)(void *);
 using boost::asio::ip::tcp;
@@ -445,6 +446,8 @@ int main(int argc, char* argv[])
             pthread_mutex_lock(&mutex);
             vectorObjektov.at(stoi(strPtr[1]) - 1)->setState(3);
             pthread_mutex_unlock(&mutex);
+        } else if (strPtr[0] == "system") {// cancel ID //cancel 1// 3 akoze nech uz sa s tym nic nerobi a poznaci sa ze to bolo cancellnute
+            std::cout << system((strPtr[1] + " " + strPtr[2] + " " + strPtr[3] + " " + strPtr[4] + " " + strPtr[5] + " " + strPtr[6]).c_str()) << std::endl;
         } else if (strPtr[0] == "exit") {
             if (zistiCiSaStahuje(&vectorObjektov, &mutex)){
                 std::cout << "Stale existuju subory, ktore sa stahuju. Chcete ukoncit program? [y/n]" << std::endl;
