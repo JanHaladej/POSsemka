@@ -3,7 +3,7 @@ project(DownloadManager)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(DownloadManager main.cpp)
+add_executable(DownloadManager main.cpp VlaknoObj.cpp VlaknoObj.h main.h)
 
 target_link_libraries(DownloadManager pthread ssl crypto)#SSL a CRYPTO kvoli ssl
 

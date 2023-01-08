@@ -1,4 +1,5 @@
 file(REMOVE_RECURSE
+  "CMakeFiles/DownloadManager.dir/VlaknoObj.cpp.o"
   "CMakeFiles/DownloadManager.dir/main.cpp.o"
   "DownloadManager"
   "DownloadManager.pdb"

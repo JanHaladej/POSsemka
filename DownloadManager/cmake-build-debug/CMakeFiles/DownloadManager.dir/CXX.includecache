@@ -17,6 +17,12 @@ string
 -
 boost/asio.hpp
 -
+boost/bind/bind.hpp
+-
+boost/asio/ssl.hpp
+-
+boost/lexical_cast.hpp
+-
 fstream
 -
 stdio.h
@@ -30,5 +36,7 @@ time.h
 unistd.h
 -
 vector
+-
+cstdlib
 -
 

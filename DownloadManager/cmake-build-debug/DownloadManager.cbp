@@ -82,6 +82,12 @@
 				</MakeCommands>
 			</Target>
 		</Build>
+		<Unit filename="/tmp/tmp.lLyWbiYxRb/VlaknoObj.cpp">
+			<Option target="DownloadManager"/>
+		</Unit>
+		<Unit filename="/tmp/tmp.lLyWbiYxRb/VlaknoObj.h">
+			<Option target="DownloadManager"/>
+		</Unit>
 		<Unit filename="/tmp/tmp.lLyWbiYxRb/main.cpp">
 			<Option target="DownloadManager"/>
 		</Unit>

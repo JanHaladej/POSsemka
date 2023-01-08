@@ -1,1 +1,1 @@
-/usr/bin/c++  -fsanitize=leak  -g CMakeFiles/DownloadManager.dir/main.cpp.o -o DownloadManager  -lpthread -lssl -lcrypto 
+/usr/bin/c++  -fsanitize=leak  -g CMakeFiles/DownloadManager.dir/main.cpp.o CMakeFiles/DownloadManager.dir/VlaknoObj.cpp.o -o DownloadManager  -lpthread -lssl -lcrypto 

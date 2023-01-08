@@ -142,6 +142,33 @@ DownloadManager/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/DownloadManager.dir/build.make CMakeFiles/DownloadManager.dir/build
 .PHONY : DownloadManager/fast
 
+VlaknoObj.o: VlaknoObj.cpp.o
+
+.PHONY : VlaknoObj.o
+
+# target to build an object file
+VlaknoObj.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/DownloadManager.dir/build.make CMakeFiles/DownloadManager.dir/VlaknoObj.cpp.o
+.PHONY : VlaknoObj.cpp.o
+
+VlaknoObj.i: VlaknoObj.cpp.i
+
+.PHONY : VlaknoObj.i
+
+# target to preprocess a source file
+VlaknoObj.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/DownloadManager.dir/build.make CMakeFiles/DownloadManager.dir/VlaknoObj.cpp.i
+.PHONY : VlaknoObj.cpp.i
+
+VlaknoObj.s: VlaknoObj.cpp.s
+
+.PHONY : VlaknoObj.s
+
+# target to generate assembly for a file
+VlaknoObj.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/DownloadManager.dir/build.make CMakeFiles/DownloadManager.dir/VlaknoObj.cpp.s
+.PHONY : VlaknoObj.cpp.s
+
 main.o: main.cpp.o
 
 .PHONY : main.o
@@ -178,6 +205,9 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... DownloadManager"
+	@echo "... VlaknoObj.o"
+	@echo "... VlaknoObj.i"
+	@echo "... VlaknoObj.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
